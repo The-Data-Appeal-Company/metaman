@@ -1,7 +1,7 @@
 # Metaman
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/The-Data-Appeal-Company/metaman)](https://goreportcard.com/report/github.com/The-Data-Appeal-Company/metaman)
-![Go](https://github.com/The-Data-Appeal-Company/metaman/workflows/Go/badge.svg?branch=master)
+![Go](https://github.com/The-Data-Appeal-Company/metaman/workflows/Docker/badge.svg?branch=master)
 [![license](https://img.shields.io/github/license/The-Data-Appeal-Company/metaman.svg)](LICENSE)
 
 ### Usage
