@@ -11,8 +11,9 @@ type DropApiRequest struct {
 }
 
 type SyncApiRequest struct {
-	Source string `json:"source"`
-	Target string `json:"target"`
-	DbName string `json:"db"`
-	Delete bool   `json:"delete"`
+	Source string   `json:"source"`
+	Target string   `json:"target"`
+	DbName string   `json:"db"`
+	Tables []string `json:"tables"`
+	Delete bool     `json:"delete"`
 }

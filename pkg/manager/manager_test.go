@@ -333,28 +333,28 @@ func TestHiveGlueManager_SyncErrorNonExistingSourceMetastore(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: NewMockPool(),
 	}
-	require.Error(t, h.Sync("no", metastore.GLUE, "pls", false))
+	require.Error(t, h.Sync("no", metastore.GLUE, "pls", nil, false))
 }
 
 func TestHiveGlueManager_SyncErrorNonExistingTargetMetastore(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: NewMockPool(),
 	}
-	require.Error(t, h.Sync(metastore.GLUE, "no", "pls", false))
+	require.Error(t, h.Sync(metastore.GLUE, "no", "pls", nil, false))
 }
 
 func TestHiveGlueManager_SyncErrorWhenSourceGetTablesError(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: NewMockPool(),
 	}
-	require.Error(t, h.Sync(metastore.GLUE, metastore.HIVE, "err", false))
+	require.Error(t, h.Sync(metastore.GLUE, metastore.HIVE, "err", nil, false))
 }
 
 func TestHiveGlueManager_SyncErrorWhenTargetGetTablesError(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: &MockPool{hive: &MetastoreMock{}, glue: &MetastoreMock{getTablesError: fmt.Errorf("error")}},
 	}
-	require.Error(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", false))
+	require.Error(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", nil, false))
 }
 
 func TestHiveGlueManager_SyncNoDifferences(t *testing.T) {
@@ -362,7 +362,7 @@ func TestHiveGlueManager_SyncNoDifferences(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: pool,
 	}
-	require.NoError(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", false))
+	require.NoError(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", nil, false))
 
 	require.Len(t, pool.glue.createTableInfoCalls, 0)
 }
@@ -372,7 +372,7 @@ func TestHiveGlueManager_SyncOnlyCreate(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: pool,
 	}
-	require.NoError(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", false))
+	require.NoError(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", nil, false))
 
 	require.Len(t, pool.glue.createTableInfoCalls, 1)
 	require.Equal(t, pool.glue.createTableInfoCalls[0].Db, "pls")
@@ -384,7 +384,7 @@ func TestHiveGlueManager_SyncTargetHasMoreThanSource(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: pool,
 	}
-	require.NoError(t, h.Sync(metastore.GLUE, metastore.HIVE, "pls", false))
+	require.NoError(t, h.Sync(metastore.GLUE, metastore.HIVE, "pls", nil, false))
 
 	require.Len(t, pool.glue.createTableInfoCalls, 0)
 }
@@ -396,7 +396,7 @@ func TestHiveGlueManager_SyncContinueOnGetTableInfoError(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: pool,
 	}
-	require.Error(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", false))
+	require.Error(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", nil, false))
 
 	require.Len(t, pool.glue.createTableInfoCalls, 1)
 	require.Equal(t, pool.glue.createTableInfoCalls[0].Db, "pls")
@@ -410,7 +410,7 @@ func TestHiveGlueManager_SyncContinueOnCreateTableError(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: pool,
 	}
-	require.Error(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", false))
+	require.Error(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", nil, false))
 
 	require.Len(t, pool.glue.createTableInfoCalls, 1)
 	require.Equal(t, pool.glue.createTableInfoCalls[0].Db, "pls")
@@ -424,7 +424,7 @@ func TestHiveGlueManager_SyncContinueOnDropTableError(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: pool,
 	}
-	require.Error(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", true))
+	require.Error(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", nil, true))
 
 	require.Len(t, pool.glue.dropTableInfoCalls, 1)
 	require.Equal(t, pool.glue.dropTableInfoCalls[0].Db, "pls")
@@ -436,7 +436,7 @@ func TestHiveGlueManager_SyncNoDelete(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: pool,
 	}
-	require.NoError(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", false))
+	require.NoError(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", nil, false))
 
 	require.Len(t, pool.glue.createTableInfoCalls, 1)
 	require.Equal(t, pool.glue.createTableInfoCalls[0].Db, "pls")
@@ -449,7 +449,7 @@ func TestHiveGlueManager_SyncDelete(t *testing.T) {
 	h := &HiveGlueManager{
 		pool: pool,
 	}
-	require.NoError(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", true))
+	require.NoError(t, h.Sync(metastore.HIVE, metastore.GLUE, "pls", nil, true))
 
 	require.Len(t, pool.glue.createTableInfoCalls, 1)
 	require.Equal(t, pool.glue.createTableInfoCalls[0].Db, "pls")

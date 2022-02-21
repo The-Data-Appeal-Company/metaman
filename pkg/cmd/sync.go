@@ -17,6 +17,7 @@ var syncCmd = &cobra.Command{
 var (
 	sourceMetastore string
 	targetMetastore string
+	sourceTables    []string
 	deleteTables    bool
 )
 
@@ -24,6 +25,7 @@ func init() {
 	syncCmd.Flags().StringVarP(&sourceMetastore, "source", "s", "", "source metastore")
 	syncCmd.Flags().StringVarP(&targetMetastore, "target", "t", "", "target metastore")
 	syncCmd.Flags().StringVarP(&database, "database", "d", "", "database name")
+	syncCmd.Flags().StringArray("tables", sourceTables, "list of tables to sync to target")
 	syncCmd.Flags().BoolVar(&deleteTables, "delete-tables", false, "delete tables from target non existing in source")
 }
 
@@ -36,7 +38,7 @@ func sync(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return metaman.Sync(source, target, database, deleteTables)
+	return metaman.Sync(source, target, database, sourceTables, deleteTables)
 }
 
 func mapSyncCommands() (metastore.MetastoreCode, metastore.MetastoreCode, error) {

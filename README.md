@@ -67,6 +67,7 @@ Flags:
       --delete-tables     delete tables from target non existing in source
   -h, --help              help for sync
   -s, --source string     source metastore
+      --tables stringArray   list of tables to sync to target
   -t, --target string     target metastore
 ```
 

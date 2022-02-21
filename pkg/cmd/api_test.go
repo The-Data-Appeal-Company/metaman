@@ -44,7 +44,7 @@ func (m *ManagerMock) Create(metastore []metastore.MetastoreCode, tables []model
 	return nil
 }
 
-func (m *ManagerMock) Sync(sourceMetastore metastore.MetastoreCode, targetMetastore metastore.MetastoreCode, dbName string, delete bool) error {
+func (m *ManagerMock) Sync(sourceMetastore metastore.MetastoreCode, targetMetastore metastore.MetastoreCode, dbName string, tables []string, delete bool) error {
 	m.syncCalls = append(m.syncCalls, model.SyncApiRequest{
 		Source: string(sourceMetastore),
 		Target: string(targetMetastore),

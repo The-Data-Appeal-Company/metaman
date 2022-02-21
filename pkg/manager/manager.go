@@ -9,7 +9,7 @@ import (
 type Manager interface {
 	Drop(metastore metastore.MetastoreCode, tables []model.DropArg) error
 	Create(metastore []metastore.MetastoreCode, tables []model.DatabaseTables) error
-	Sync(sourceMetastore metastore.MetastoreCode, targetMetastore metastore.MetastoreCode, dbName string, delete bool) error
+	Sync(sourceMetastore metastore.MetastoreCode, targetMetastore metastore.MetastoreCode, dbName string, tables []string, delete bool) error
 }
 
 type HiveGlueManager struct {
@@ -58,7 +58,7 @@ func (h *HiveGlueManager) Create(metastores []metastore.MetastoreCode, tables []
 	return result
 }
 
-func (h *HiveGlueManager) Sync(sourceMetastore metastore.MetastoreCode, targetMetastore metastore.MetastoreCode, dbName string, delete bool) error {
+func (h *HiveGlueManager) Sync(sourceMetastore metastore.MetastoreCode, targetMetastore metastore.MetastoreCode, dbName string, tables []string, delete bool) error {
 	source, err := h.pool.Get(sourceMetastore)
 	if err != nil {
 		return err
@@ -67,24 +67,19 @@ func (h *HiveGlueManager) Sync(sourceMetastore metastore.MetastoreCode, targetMe
 	if err != nil {
 		return err
 	}
-	sourceTables, err := source.GetTables(dbName)
-	if err != nil {
-		return err
+	sourceTables := tables
+	if len(tables) == 0 {
+		sourceTables, err = source.GetTables(dbName)
+		if err != nil {
+			return err
+		}
 	}
 	targetTables, err := target.GetTables(dbName)
 	if err != nil {
 		return err
 	}
 	//create
-	var result error
-	for _, sourceTable := range sourceTables {
-		if !tableExists(sourceTable, targetTables) {
-			err := createTable(source, target, dbName, sourceTable)
-			if err != nil {
-				result = multierror.Append(result, err)
-			}
-		}
-	}
+	result := syncTables(source, target, dbName, sourceTables, targetTables)
 	//drop
 	if delete {
 		for _, targetTable := range targetTables {
@@ -93,6 +88,19 @@ func (h *HiveGlueManager) Sync(sourceMetastore metastore.MetastoreCode, targetMe
 				if err != nil {
 					result = multierror.Append(result, err)
 				}
+			}
+		}
+	}
+	return result
+}
+
+func syncTables(source metastore.Metastore, target metastore.Metastore, dbName string, sourceTables, targetTables []string) error {
+	var result error
+	for _, sourceTable := range sourceTables {
+		if !tableExists(sourceTable, targetTables) {
+			err := createTable(source, target, dbName, sourceTable)
+			if err != nil {
+				result = multierror.Append(result, err)
 			}
 		}
 	}

@@ -81,7 +81,7 @@ func (a *ApiHandler) handleSync(c *gin.Context) {
 		})
 		return
 	}
-	err = a.manager.Sync(source, target, request.DbName, request.Delete)
+	err = a.manager.Sync(source, target, request.DbName, request.Tables, request.Delete)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
