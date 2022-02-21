@@ -1,0 +1,60 @@
+replicaCount: 2
+
+image:
+  repository: datappeal/metaman
+  tag: latest
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: [ ]
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: { }
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: { }
+
+securityContext: { }
+
+service:
+  annotations: { }
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  annotations: { }
+  hosts:
+    - host: metaman.local
+      paths: [ ]
+  tls: [ ]
+
+resources: { }
+
+nodeSelector: { }
+
+tolerations: [ ]
+
+affinity: { }
+
+api:
+  enabled: true
+
+config:
+  metastore:
+    hive:
+      url: <hive_url>
+      port: <hive_port>
+  aws:
+    region: <aws_region>
+  prometheus:
+    enabled: <prometheus_enabled>
+
+aws_access_key: <aws_access_key>
+aws_secret_key: <aws_secret_key>
