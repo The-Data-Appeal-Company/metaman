@@ -19,7 +19,7 @@ type GlueMock struct {
 }
 
 func (g *GlueMock) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
-	if *input.DatabaseName != "pls" || *input.Name != "table" {
+	if *input.DatabaseName != "pls" || (*input.Name != "table" && *input.Name != "table1") {
 		return nil, fmt.Errorf("error")
 	}
 	return &glue.GetTableOutput{
@@ -49,7 +49,7 @@ func (g *GlueMock) CreateTable(input *glue.CreateTableInput) (*glue.CreateTableO
 
 func (g *GlueMock) DeleteTable(input *glue.DeleteTableInput) (*glue.DeleteTableOutput, error) {
 	g.deleteCalls = append(g.deleteCalls, input)
-	if *input.DatabaseName != "pls" {
+	if *input.DatabaseName != "pls" || *input.Name == "table1" {
 		return nil, fmt.Errorf("error")
 	}
 	return &glue.DeleteTableOutput{}, nil
@@ -391,8 +391,8 @@ func TestGlueMetaStore_DropTable(t *testing.T) {
 				fileDeleter: &MockFileDeleter{},
 			},
 			args: args{
-				dbName:    "err",
-				tableName: "table",
+				dbName:    "pls",
+				tableName: "table1",
 			},
 			wantErr: true,
 		},
@@ -433,9 +433,13 @@ func TestGlueMetaStore_DropTable(t *testing.T) {
 				return
 			}
 			mock := tt.fields.glue.(*GlueMock)
-			require.Len(t, mock.deleteCalls, 1)
-			require.Equal(t, *mock.deleteCalls[0].DatabaseName, tt.args.dbName)
-			require.Equal(t, *mock.deleteCalls[0].Name, tt.args.tableName)
+			if tt.args.tableName == "tab" {
+				require.Len(t, mock.deleteCalls, 0)
+			} else {
+				require.Len(t, mock.deleteCalls, 1)
+				require.Equal(t, *mock.deleteCalls[0].DatabaseName, tt.args.dbName)
+				require.Equal(t, *mock.deleteCalls[0].Name, tt.args.tableName)
+			}
 
 			fileDeleter := tt.fields.fileDeleter.(*MockFileDeleter)
 			if tt.args.deleteData && (!tt.wantErr || fileDeleter.err != nil) {
