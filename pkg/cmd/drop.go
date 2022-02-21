@@ -7,9 +7,9 @@ import (
 )
 
 var dropCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "delete table",
-	Long:  `delete table`,
+	Use:   "drop",
+	Short: "drop table",
+	Long:  `drop table`,
 	RunE:  drop,
 }
 

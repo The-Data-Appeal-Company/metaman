@@ -19,14 +19,14 @@ import (
 var ConfPath string
 
 var rootCmd = &cobra.Command{
-	Use:   "manager",
-	Short: "manager is the command-line tool/api to interact with metastore",
-	Long: `manager is the command-line tool/api to interact with metastore.
-			Currently supported metastore are: Glue, Hive.
-			Supported operations are:
-			- create tables
-			- drop tables along with data
-			- sync different metastore`,
+	Use:   "metaman",
+	Short: "metaman is the command-line tool/api to interact with metastore",
+	Long: `metaman is the command-line tool/api to interact with metastore.
+Currently supported metastore are: Glue, Hive.
+Supported operations are:
+- create tables
+- drop tables along with data
+- sync different metastore`,
 }
 
 func init() {
