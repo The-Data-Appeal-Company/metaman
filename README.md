@@ -3,6 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/The-Data-Appeal-Company/metaman)](https://goreportcard.com/report/github.com/The-Data-Appeal-Company/metaman)
 ![Go](https://github.com/The-Data-Appeal-Company/metaman/workflows/Docker/badge.svg?branch=master)
 [![license](https://img.shields.io/github/license/The-Data-Appeal-Company/metaman.svg)](LICENSE)
+[![Coverage Status](https://coveralls.io/repos/github/The-Data-Appeal-Company/metaman/badge.svg?branch=master)](https://coveralls.io/github/The-Data-Appeal-Company/metaman?branch=master)
 
 ### Usage
 ```
