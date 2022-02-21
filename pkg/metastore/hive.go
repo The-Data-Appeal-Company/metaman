@@ -59,20 +59,20 @@ func (h *HiveMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 }
 
 func (h *HiveMetaStore) DropTable(dbName string, tableName string, deleteData bool) error {
-	err := h.hive.DropTable(dbName, tableName, deleteData)
+	info, err := h.GetTableInfo(dbName, tableName)
+	if err != nil {
+		return err
+	}
+	err = h.hive.DropTable(dbName, tableName, deleteData)
 	if err != nil {
 		return err
 	}
 	if deleteData {
-		info, err := h.GetTableInfo(dbName, tableName)
-		if err != nil {
-			logrus.Errorf("table dropped on hive but could not delete files if they are on s3")
-			return err
-		}
 		if isOnS3(info.MetadataLocation) {
 			bucket, path := getBucketPath(info.MetadataLocation)
 			err := h.fileDeleter.Delete(context.Background(), bucket, path)
 			if err != nil {
+				logrus.Errorf("table dropped on hive but could not delete files if they are on s3")
 				return err
 			}
 		}
