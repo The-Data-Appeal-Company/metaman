@@ -56,10 +56,13 @@ func (g *GlueMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 			Name: &table.Name,
 			StorageDescriptor: &glue.StorageDescriptor{
 				Columns:      unmapColumnsGlue(table.Columns),
-				Location:     &table.MetadataLocation,
 				InputFormat:  aws.String(table.Format.InputFormat()),
+				Location:     aws.String(getMetadataLocation(table)),
 				OutputFormat: aws.String(table.Format.OutputFormat()),
+				SerdeInfo:    table.Format.SerDeInfo(),
 			},
+			TableType:  table.Format.TableType(),
+			Parameters: table.Format.Parameters(table.MetadataLocation),
 		},
 	})
 	return err

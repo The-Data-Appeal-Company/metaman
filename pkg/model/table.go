@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/glue"
 	"strconv"
 	"strings"
 )
@@ -12,6 +13,17 @@ const (
 	PARQUET TableFormat = "parquet"
 	ICEBERG             = "iceberg"
 )
+
+func FromInputOutput(input string) TableFormat {
+	switch input {
+	case "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat":
+		fallthrough
+	case "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat":
+		return PARQUET
+	default:
+		return ICEBERG
+	}
+}
 
 func (t TableFormat) InputFormat() string {
 	switch t {
@@ -35,14 +47,66 @@ func (t TableFormat) OutputFormat() string {
 	}
 }
 
-func FromInputOutput(input string) TableFormat {
-	switch input {
-	case "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat":
-		fallthrough
-	case "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat":
-		return PARQUET
+func (t TableFormat) SerDeInfo() *glue.SerDeInfo {
+	switch t {
+	case PARQUET:
+		return &glue.SerDeInfo{
+			Parameters:           t.SerdeParameters(),
+			SerializationLibrary: t.SerdeLibrary(),
+		}
+	case ICEBERG:
+		return nil
 	default:
-		return ICEBERG
+		return nil
+	}
+}
+
+func (t TableFormat) SerdeLibrary() *string {
+	switch t {
+	case PARQUET:
+		return strPtr("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe")
+	case ICEBERG:
+		return nil
+	default:
+		return nil
+	}
+}
+
+func (t TableFormat) SerdeParameters() map[string]*string {
+	switch t {
+	case PARQUET:
+		return map[string]*string{
+			"serialization.format": strPtr("1"),
+		}
+	case ICEBERG:
+		return nil
+	default:
+		return nil
+	}
+}
+
+func (t TableFormat) Parameters(location string) map[string]*string {
+	switch t {
+	case PARQUET:
+		return nil
+	case ICEBERG:
+		return map[string]*string{
+			"metadata_location": strPtr(location),
+			"table_type":        strPtr("ICEBERG"),
+		}
+	default:
+		return nil
+	}
+}
+
+func (t TableFormat) TableType() *string {
+	switch t {
+	case PARQUET:
+		return nil
+	case ICEBERG:
+		return strPtr(ICEBERG)
+	default:
+		return nil
 	}
 }
 
@@ -113,3 +177,7 @@ const (
 	TIMESTAMP         = "timestamp"
 	BOOLEAN           = "boolean"
 )
+
+func strPtr(s string) *string {
+	return &s
+}
