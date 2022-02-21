@@ -13,7 +13,7 @@ import (
 
 var apiCmd = &cobra.Command{
 	Use:   "api",
-	Short: "run an api for metastire management",
+	Short: "run an api for metastore management",
 	Long:  `api have the same functionality as the command line but served as rest api`,
 	RunE:  api,
 }
@@ -84,7 +84,7 @@ func (a *ApiHandler) handleSync(c *gin.Context) {
 	err = a.manager.Sync(source, target, request.DbName, request.Delete)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		return
 	}
@@ -110,7 +110,7 @@ func (a *ApiHandler) handleDrop(c *gin.Context) {
 	err = a.manager.Drop(code, request.Tables)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		return
 	}
@@ -136,7 +136,7 @@ func (a *ApiHandler) handleCreate(c *gin.Context) {
 	err = a.manager.Create(codes, request.Tables)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
+			"error": err.Error(),
 		})
 		return
 	}

@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/require"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/metastore"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/model"
@@ -63,6 +64,8 @@ func TestApiHandler_shouldCreate(t *testing.T) {
 		wantErr bool
 	}
 
+	var result error
+	result = multierror.Append(result, fmt.Errorf("error"))
 	tests := []args{
 		{
 			mock:    ManagerMock{},
@@ -70,7 +73,7 @@ func TestApiHandler_shouldCreate(t *testing.T) {
 		},
 		{
 			mock: ManagerMock{
-				createError: fmt.Errorf("error"),
+				createError: result,
 			},
 			wantErr: true,
 			request: getCreateApiRequest([]string{"hive", "glue"}),
