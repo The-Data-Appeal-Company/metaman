@@ -66,7 +66,11 @@ func (g *GlueMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 }
 
 func (g *GlueMetaStore) DropTable(dbName string, tableName string, deleteData bool) error {
-	_, err := g.glue.DeleteTable(&glue.DeleteTableInput{
+	info, err := g.GetTableInfo(dbName, tableName)
+	if err != nil {
+		return err
+	}
+	_, err = g.glue.DeleteTable(&glue.DeleteTableInput{
 		DatabaseName: aws.String(dbName),
 		Name:         aws.String(tableName),
 	})
@@ -74,15 +78,11 @@ func (g *GlueMetaStore) DropTable(dbName string, tableName string, deleteData bo
 		return err
 	}
 	if deleteData {
-		info, err := g.GetTableInfo(dbName, tableName)
-		if err != nil {
-			logrus.Errorf("table dropped on glue but could not delete files if they are on s3")
-			return err
-		}
 		if isOnS3(info.MetadataLocation) {
 			bucket, path := getBucketPath(info.MetadataLocation)
 			err := g.fileDeleter.Delete(context.Background(), bucket, path)
 			if err != nil {
+				logrus.Errorf("table dropped on glue but could not delete files if they are on s3")
 				return err
 			}
 		}
