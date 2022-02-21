@@ -2,10 +2,14 @@ package model
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/glue"
 	"strconv"
 	"strings"
 )
+
+type SerDeInfo struct {
+	SerializationLib string
+	Parameters       map[string]string
+}
 
 type TableFormat string
 
@@ -47,12 +51,12 @@ func (t TableFormat) OutputFormat() string {
 	}
 }
 
-func (t TableFormat) SerDeInfo() *glue.SerDeInfo {
+func (t TableFormat) SerDeInfo() *SerDeInfo {
 	switch t {
 	case PARQUET:
-		return &glue.SerDeInfo{
-			Parameters:           t.SerdeParameters(),
-			SerializationLibrary: t.SerdeLibrary(),
+		return &SerDeInfo{
+			Parameters:       t.SerdeParameters(),
+			SerializationLib: t.SerdeLibrary(),
 		}
 	case ICEBERG:
 		return nil
@@ -61,22 +65,22 @@ func (t TableFormat) SerDeInfo() *glue.SerDeInfo {
 	}
 }
 
-func (t TableFormat) SerdeLibrary() *string {
+func (t TableFormat) SerdeLibrary() string {
 	switch t {
 	case PARQUET:
-		return strPtr("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe")
+		return "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
 	case ICEBERG:
-		return nil
+		return ""
 	default:
-		return nil
+		return ""
 	}
 }
 
-func (t TableFormat) SerdeParameters() map[string]*string {
+func (t TableFormat) SerdeParameters() map[string]string {
 	switch t {
 	case PARQUET:
-		return map[string]*string{
-			"serialization.format": strPtr("1"),
+		return map[string]string{
+			"serialization.format": "1",
 		}
 	case ICEBERG:
 		return nil
@@ -85,14 +89,14 @@ func (t TableFormat) SerdeParameters() map[string]*string {
 	}
 }
 
-func (t TableFormat) Parameters(location string) map[string]*string {
+func (t TableFormat) Parameters(location string) map[string]string {
 	switch t {
 	case PARQUET:
 		return nil
 	case ICEBERG:
-		return map[string]*string{
-			"metadata_location": strPtr(location),
-			"table_type":        strPtr("ICEBERG"),
+		return map[string]string{
+			"metadata_location": location,
+			"table_type":        "ICEBERG",
 		}
 	default:
 		return nil

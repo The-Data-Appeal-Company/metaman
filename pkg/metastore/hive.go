@@ -54,7 +54,9 @@ func (h *HiveMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 			Location:     table.MetadataLocation,
 			InputFormat:  table.Format.InputFormat(),
 			OutputFormat: table.Format.OutputFormat(),
+			SerdeInfo:    mapSerdeInfoHive(table.Format.SerDeInfo()),
 		},
+		Parameters: table.Format.Parameters(table.MetadataLocation),
 	})
 }
 
@@ -100,4 +102,14 @@ func mapColumnsHive(cols []*hive_metastore.FieldSchema) []model.Column {
 		}
 	}
 	return columns
+}
+
+func mapSerdeInfoHive(info *model.SerDeInfo) *hive_metastore.SerDeInfo {
+	if info == nil {
+		return nil
+	}
+	return &hive_metastore.SerDeInfo{
+		SerializationLib: info.SerializationLib,
+		Parameters:       info.Parameters,
+	}
 }

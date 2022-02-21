@@ -59,10 +59,10 @@ func (g *GlueMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 				InputFormat:  aws.String(table.Format.InputFormat()),
 				Location:     aws.String(getMetadataLocation(table)),
 				OutputFormat: aws.String(table.Format.OutputFormat()),
-				SerdeInfo:    table.Format.SerDeInfo(),
+				SerdeInfo:    mapSerdeInfoGlue(table.Format.SerDeInfo()),
 			},
 			TableType:  table.Format.TableType(),
-			Parameters: table.Format.Parameters(table.MetadataLocation),
+			Parameters: mapParametersGlue(table.Format.Parameters(table.MetadataLocation)),
 		},
 	})
 	return err
@@ -113,4 +113,22 @@ func unmapColumnsGlue(columns []model.Column) []*glue.Column {
 		}
 	}
 	return cols
+}
+
+func mapParametersGlue(parameters map[string]string) map[string]*string {
+	params := make(map[string]*string)
+	for k, v := range parameters {
+		params[k] = &v
+	}
+	return params
+}
+
+func mapSerdeInfoGlue(info *model.SerDeInfo) *glue.SerDeInfo {
+	if info == nil {
+		return nil
+	}
+	return &glue.SerDeInfo{
+		SerializationLibrary: aws.String(info.SerializationLib),
+		Parameters:           mapParametersGlue(info.Parameters),
+	}
 }
