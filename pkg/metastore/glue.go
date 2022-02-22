@@ -42,10 +42,10 @@ func (g *GlueMetaStore) GetTableInfo(dbName, tableName string) (model.TableInfo,
 		return model.TableInfo{}, err
 	}
 	return model.TableInfo{
-		Name:             *table.Table.Name,
+		Name:             stringFromPtr(table.Table.Name),
 		Columns:          mapColumnsGlue(table.Table.StorageDescriptor.Columns),
-		MetadataLocation: *table.Table.StorageDescriptor.Location,
-		Format:           model.FromInputOutput(*table.Table.StorageDescriptor.InputFormat),
+		MetadataLocation: stringFromPtr(table.Table.StorageDescriptor.Location),
+		Format:           model.FromInputOutput(stringFromPtr(table.Table.StorageDescriptor.InputFormat)),
 	}, nil
 }
 
@@ -57,12 +57,12 @@ func (g *GlueMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 			StorageDescriptor: &glue.StorageDescriptor{
 				Columns:      unmapColumnsGlue(table.Columns),
 				InputFormat:  aws.String(table.Format.InputFormat()),
-				Location:     aws.String(getMetadataLocation(table)),
+				Location:     aws.String(getMetadataLocation(GLUE, table)),
 				OutputFormat: aws.String(table.Format.OutputFormat()),
 				SerdeInfo:    mapSerdeInfoGlue(table.Format.SerDeInfo()),
 			},
 			TableType:  table.Format.TableType(),
-			Parameters: mapParametersGlue(table.Format.Parameters(table.MetadataLocation)),
+			Parameters: mapParametersGlue(table.Format.Parameters(convertS3Format(GLUE, table.MetadataLocation))),
 		},
 	})
 	return err
@@ -97,8 +97,8 @@ func mapColumnsGlue(columns []*glue.Column) []model.Column {
 	cols := make([]model.Column, len(columns))
 	for i, column := range columns {
 		cols[i] = model.Column{
-			Name: *column.Name,
-			Type: model.MapColumnType(*column.Type),
+			Name: stringFromPtr(column.Name),
+			Type: model.MapColumnType(stringFromPtr(column.Type)),
 		}
 	}
 	return cols
@@ -118,7 +118,8 @@ func unmapColumnsGlue(columns []model.Column) []*glue.Column {
 func mapParametersGlue(parameters map[string]string) map[string]*string {
 	params := make(map[string]*string)
 	for k, v := range parameters {
-		params[k] = &v
+		tmp := v
+		params[k] = &tmp
 	}
 	return params
 }

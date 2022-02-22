@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/akolb1/gometastore/hmsclient"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	awsGlue "github.com/aws/aws-sdk-go/service/glue"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/config"
@@ -70,8 +73,14 @@ func getMetastoreManager() (*manager.HiveGlueManager, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	db, err := sql.Open(configuration.Db.Driver, configuration.Db.ConnectionString())
+	if err != nil {
+		return nil, err
+	}
+	aux := metastore.NewPgAuxInfoRetriever(db)
 	pool := metastore.NewPoolMetastore(
-		metastore.NewHiveMetaStore(clientHive, fileDeleter),
+		metastore.NewHiveMetaStore(clientHive, fileDeleter, aux),
 		metastore.NewGlueMetaStore(awsGlue.New(sess), fileDeleter),
 	)
 	return manager.NewHiveGlueManager(pool), nil

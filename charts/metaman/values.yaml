@@ -55,6 +55,14 @@ config:
     region: <aws_region>
   prometheus:
     enabled: <prometheus_enabled>
+  db:
+    host: <db_host>
+    port: <db_port>
+    database: <db_name>
+    user: <db_user>
+    password: <db_pwd>
+    ssl_mode: <ssl_mode>
+    driver: <db_driver>
 
 aws_access_key: <aws_access_key>
 aws_secret_key: <aws_secret_key>

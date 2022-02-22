@@ -22,13 +22,34 @@ func isOnS3(location string) bool {
 	return strings.HasPrefix(location, "s3://") || strings.HasPrefix(location, "s3a://")
 }
 
-func getMetadataLocation(table model.TableInfo) string {
+func getMetadataLocation(metastoreCode MetastoreCode, table model.TableInfo) string {
+	location := convertS3Format(metastoreCode, table.MetadataLocation)
 	switch table.Format {
 	case model.PARQUET:
-		return table.MetadataLocation
+		return location
 	case model.ICEBERG:
-		return table.MetadataLocation[0:strings.LastIndex(table.MetadataLocation, "/metadata/")]
+		if strings.Contains(location, "/metadata/") {
+			return location[0:strings.LastIndex(location, "/metadata/")]
+		}
+		return location
 	default:
 		return ""
 	}
+}
+
+func convertS3Format(metastoreCode MetastoreCode, location string) string {
+	switch metastoreCode {
+	case GLUE:
+		location = strings.ReplaceAll(location, "s3a://", "s3://")
+	case HIVE:
+		location = strings.ReplaceAll(location, "s3://", "s3a://")
+	}
+	return location
+}
+
+func stringFromPtr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/deleter"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/model"
+	"strings"
 )
 
 type Hive interface {
@@ -19,10 +20,11 @@ type Hive interface {
 type HiveMetaStore struct {
 	hive        Hive
 	fileDeleter deleter.FileDeleter
+	aux         AuxInfoRetriever
 }
 
-func NewHiveMetaStore(hive Hive, fileDeleter deleter.FileDeleter) *HiveMetaStore {
-	return &HiveMetaStore{hive: hive, fileDeleter: fileDeleter}
+func NewHiveMetaStore(hive Hive, fileDeleter deleter.FileDeleter, aux AuxInfoRetriever) *HiveMetaStore {
+	return &HiveMetaStore{hive: hive, fileDeleter: fileDeleter, aux: aux}
 }
 
 func (h *HiveMetaStore) GetTables(dbName string) ([]string, error) {
@@ -34,11 +36,19 @@ func (h *HiveMetaStore) GetTableInfo(dbName, tableName string) (model.TableInfo,
 	if err != nil {
 		return model.TableInfo{}, err
 	}
+	format := model.FromInputOutput(table.Sd.InputFormat)
+	location := table.Sd.Location
+	if format == model.ICEBERG {
+		location, err = h.aux.GetTableProperty(context.Background(), tableName, "metadata_location")
+		if err != nil {
+			return model.TableInfo{}, err
+		}
+	}
 	return model.TableInfo{
 		Name:             table.GetTableName(),
 		Columns:          mapColumnsHive(table.Sd.Cols),
-		MetadataLocation: table.Sd.Location,
-		Format:           model.FromInputOutput(table.Sd.InputFormat),
+		MetadataLocation: location,
+		Format:           format,
 	}, nil
 }
 
@@ -46,18 +56,21 @@ func (h *HiveMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 	if len(table.Columns) == 0 {
 		return fmt.Errorf("cannot Create table with 0 columns")
 	}
-	return h.hive.CreateTable(&hive_metastore.Table{
+	t := &hive_metastore.Table{
 		TableName: table.Name,
 		DbName:    dbName,
+		Owner:     "metaman",
 		Sd: &hive_metastore.StorageDescriptor{
 			Cols:         unmapColumnsHive(table.Columns),
-			Location:     table.MetadataLocation,
+			Location:     getMetadataLocation(HIVE, table),
 			InputFormat:  table.Format.InputFormat(),
 			OutputFormat: table.Format.OutputFormat(),
 			SerdeInfo:    mapSerdeInfoHive(table.Format.SerDeInfo()),
 		},
-		Parameters: table.Format.Parameters(table.MetadataLocation),
-	})
+		Parameters: table.Format.Parameters(convertS3Format(HIVE, table.MetadataLocation)),
+		TableType:  "EXTERNAL_TABLE",
+	}
+	return h.hive.CreateTable(t)
 }
 
 func (h *HiveMetaStore) DropTable(dbName string, tableName string, deleteData bool) error {
@@ -87,10 +100,17 @@ func unmapColumnsHive(columns []model.Column) []*hive_metastore.FieldSchema {
 	for i, column := range columns {
 		cols[i] = &hive_metastore.FieldSchema{
 			Name: column.Name,
-			Type: model.UnmapColumnType(column.Type),
+			Type: mapHiveColumnType(model.UnmapColumnType(column.Type)),
 		}
 	}
 	return cols
+}
+
+func mapHiveColumnType(columnType string) string {
+	if strings.ToLower(columnType) == "string" {
+		return "varchar(1024)"
+	}
+	return columnType
 }
 
 func mapColumnsHive(cols []*hive_metastore.FieldSchema) []model.Column {

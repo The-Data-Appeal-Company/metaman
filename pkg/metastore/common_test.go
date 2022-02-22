@@ -61,7 +61,8 @@ func Test_getBucketPath(t *testing.T) {
 
 func Test_getMetadataLocation(t *testing.T) {
 	type args struct {
-		table model.TableInfo
+		metastoreCode MetastoreCode
+		table         model.TableInfo
 	}
 	tests := []struct {
 		name string
@@ -69,19 +70,42 @@ func Test_getMetadataLocation(t *testing.T) {
 		want string
 	}{
 		{
-			name: "shouldGetMetadataLocationIceberg",
+			name: "shouldGetMetadataLocationIcebergGlue",
 			args: args{
+				metastoreCode: GLUE,
 				table: model.TableInfo{
-					MetadataLocation: "s3://bucket/tests/schema/table/metadata/00000-8051da97-485b-4715-b22f-6302b46c752e.metadata.json",
+					MetadataLocation: "s3a://bucket/tests/schema/table/metadata/00000-8051da97-485b-4715-b22f-6302b46c752e.metadata.json",
 					Format:           model.ICEBERG,
 				},
 			},
 			want: "s3://bucket/tests/schema/table",
 		},
+		{
+			name: "shouldGetMetadataLocationIcebergHive",
+			args: args{
+				metastoreCode: HIVE,
+				table: model.TableInfo{
+					MetadataLocation: "s3://bucket/tests/schema/table/metadata/00000-8051da97-485b-4715-b22f-6302b46c752e.metadata.json",
+					Format:           model.ICEBERG,
+				},
+			},
+			want: "s3a://bucket/tests/schema/table",
+		},
+		{
+			name: "shouldGetMetadataLocationParquetHive",
+			args: args{
+				metastoreCode: HIVE,
+				table: model.TableInfo{
+					MetadataLocation: "s3://bucket/tests/schema/table",
+					Format:           model.PARQUET,
+				},
+			},
+			want: "s3a://bucket/tests/schema/table",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, getMetadataLocation(tt.args.table))
+			require.Equal(t, tt.want, getMetadataLocation(tt.args.metastoreCode, tt.args.table))
 		})
 	}
 }

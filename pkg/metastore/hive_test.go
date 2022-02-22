@@ -10,6 +10,13 @@ import (
 	"testing"
 )
 
+type AuxMock struct {
+}
+
+func (a *AuxMock) GetTableProperty(_ context.Context, table, _ string) (string, error) {
+	return fmt.Sprintf("s3://bucket/%s/metadata/hcidhihcid.json", table), nil
+}
+
 type MockFileDeleter struct {
 	paths map[string][]string
 	err   error
@@ -409,6 +416,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 	type fields struct {
 		hive        Hive
 		fileDeleter deleter.FileDeleter
+		aux         AuxInfoRetriever
 	}
 	type args struct {
 		dbName     string
@@ -426,6 +434,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 			fields: fields{
 				hive:        &HiveMock{},
 				fileDeleter: &MockFileDeleter{},
+				aux:         &AuxMock{},
 			},
 			args: args{
 				dbName:     "pls",
@@ -439,6 +448,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 			fields: fields{
 				hive:        &HiveMock{},
 				fileDeleter: &MockFileDeleter{},
+				aux:         &AuxMock{},
 			},
 			args: args{
 				dbName:     "pls",
@@ -452,6 +462,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 			fields: fields{
 				hive:        &HiveMock{},
 				fileDeleter: &MockFileDeleter{},
+				aux:         &AuxMock{},
 			},
 			args: args{
 				dbName:     "pls",
@@ -465,6 +476,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 			fields: fields{
 				hive:        &HiveMock{},
 				fileDeleter: &MockFileDeleter{},
+				aux:         &AuxMock{},
 			},
 			args: args{
 				dbName:     "pls",
@@ -480,6 +492,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 				fileDeleter: &MockFileDeleter{
 					err: fmt.Errorf("error"),
 				},
+				aux: &AuxMock{},
 			},
 			args: args{
 				dbName:     "pls",
@@ -491,7 +504,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := NewHiveMetaStore(tt.fields.hive, tt.fields.fileDeleter)
+			h := NewHiveMetaStore(tt.fields.hive, tt.fields.fileDeleter, tt.fields.aux)
 			if err := h.DropTable(tt.args.dbName, tt.args.tableName, tt.args.deleteData); (err != nil) != tt.wantErr {
 				t.Errorf("DropTable() error = %v, wantErr %v", err, tt.wantErr)
 				return
