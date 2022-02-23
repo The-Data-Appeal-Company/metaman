@@ -14,7 +14,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ .Release.Name }}-configmap
+  name: aws-credentials
   labels:
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}

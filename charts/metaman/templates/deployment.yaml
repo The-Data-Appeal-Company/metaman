@@ -36,6 +36,9 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /config
+          envFrom:
+            - secretRef:
+                name: aws-credentials
           resources:
       {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
