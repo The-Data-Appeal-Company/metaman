@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/deleter"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/model"
+	"strings"
 	"testing"
 )
 
@@ -361,6 +362,7 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 						},
 					},
 					MetadataLocation: "s3://bucket/table",
+					Format:           model.PARQUET,
 				},
 			},
 			wantErr: true,
@@ -376,6 +378,7 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 					Name:             "table",
 					Columns:          []model.Column{},
 					MetadataLocation: "s3://bucket/table",
+					Format:           model.PARQUET,
 				},
 			},
 			wantErr: true,
@@ -396,11 +399,11 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 				return
 			}
 			require.Len(t, mock.createCalls, 1)
-			require.Equal(t, mock.createCalls[0].TableName, tt.args.table.Name)
-			require.Equal(t, mock.createCalls[0].DbName, tt.args.dbName)
-			require.Equal(t, mock.createCalls[0].Sd.Location, tt.args.table.MetadataLocation)
-			require.Equal(t, mock.createCalls[0].Sd.InputFormat, tt.args.table.Format.InputFormat())
-			require.Equal(t, mock.createCalls[0].Sd.OutputFormat, tt.args.table.Format.OutputFormat())
+			require.Equal(t, tt.args.table.Name, mock.createCalls[0].TableName)
+			require.Equal(t, tt.args.dbName, mock.createCalls[0].DbName)
+			require.Equal(t, strings.ReplaceAll(tt.args.table.MetadataLocation, "s3://", "s3a://"), mock.createCalls[0].Sd.Location)
+			require.Equal(t, tt.args.table.Format.InputFormat(), mock.createCalls[0].Sd.InputFormat)
+			require.Equal(t, tt.args.table.Format.OutputFormat(), mock.createCalls[0].Sd.OutputFormat)
 			require.Len(t, mock.createCalls[0].Sd.Cols, len(tt.args.table.Columns))
 			for i, column := range tt.args.table.Columns {
 				require.Equal(t, mock.createCalls[0].Sd.Cols[i], &hive_metastore.FieldSchema{
