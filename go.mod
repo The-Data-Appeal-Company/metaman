@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/akolb1/gometastore v0.0.0-20211122182549-3be600732d4b
-	github.com/aws/aws-sdk-go v1.42.51
+	github.com/aws/aws-sdk-go v1.43.8
 	github.com/aws/aws-sdk-go-v2/config v1.14.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.25.0
 	github.com/banzaicloud/go-gin-prometheus v0.1.0
@@ -59,7 +59,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
-	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
