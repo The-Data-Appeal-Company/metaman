@@ -3,6 +3,7 @@ package metastore
 import (
 	"context"
 	"fmt"
+	"github.com/akolb1/gometastore/hmsclient"
 	"github.com/akolb1/gometastore/hmsclient/thrift/gen-go/hive_metastore"
 	"github.com/sirupsen/logrus"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/deleter"
@@ -17,22 +18,51 @@ type Hive interface {
 	DropTable(dbName string, tableName string, deleteData bool) error
 }
 
+type HiveFactory interface {
+	getHive() (Hive, error)
+}
+
+type HiveAlwaysRecreateFactory struct {
+	hiveHost string
+	hivePort int
+}
+
+func NewHiveAlwaysRecreateFactory(hiveHost string, hivePort int) *HiveAlwaysRecreateFactory {
+	return &HiveAlwaysRecreateFactory{hiveHost: hiveHost, hivePort: hivePort}
+}
+
+func (h *HiveAlwaysRecreateFactory) getHive() (Hive, error) {
+	clientHive, err := hmsclient.Open(h.hiveHost, h.hivePort)
+	if err != nil {
+		return nil, err
+	}
+	return clientHive, nil
+}
+
 type HiveMetaStore struct {
-	hive        Hive
+	hiveFactory HiveFactory
 	fileDeleter deleter.FileDeleter
 	aux         AuxInfoRetriever
 }
 
-func NewHiveMetaStore(hive Hive, fileDeleter deleter.FileDeleter, aux AuxInfoRetriever) *HiveMetaStore {
-	return &HiveMetaStore{hive: hive, fileDeleter: fileDeleter, aux: aux}
+func NewHiveMetaStore(hiveFactory HiveFactory, fileDeleter deleter.FileDeleter, aux AuxInfoRetriever) *HiveMetaStore {
+	return &HiveMetaStore{hiveFactory: hiveFactory, fileDeleter: fileDeleter, aux: aux}
 }
 
 func (h *HiveMetaStore) GetTables(dbName string) ([]string, error) {
-	return h.hive.GetAllTables(dbName)
+	hive, err := h.hiveFactory.getHive()
+	if err != nil {
+		return nil, err
+	}
+	return hive.GetAllTables(dbName)
 }
 
 func (h *HiveMetaStore) GetTableInfo(dbName, tableName string) (model.TableInfo, error) {
-	table, err := h.hive.GetTable(dbName, tableName)
+	hive, err := h.hiveFactory.getHive()
+	if err != nil {
+		return model.TableInfo{}, err
+	}
+	table, err := hive.GetTable(dbName, tableName)
 	if err != nil {
 		return model.TableInfo{}, err
 	}
@@ -56,7 +86,11 @@ func (h *HiveMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 	if len(table.Columns) == 0 {
 		return fmt.Errorf("cannot Create table with 0 columns")
 	}
-	t := &hive_metastore.Table{
+	hive, err := h.hiveFactory.getHive()
+	if err != nil {
+		return err
+	}
+	return hive.CreateTable(&hive_metastore.Table{
 		TableName: table.Name,
 		DbName:    dbName,
 		Owner:     "metaman",
@@ -69,16 +103,16 @@ func (h *HiveMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 		},
 		Parameters: table.Format.Parameters(convertS3Format(HIVE, table.MetadataLocation)),
 		TableType:  "EXTERNAL_TABLE",
-	}
-	return h.hive.CreateTable(t)
+	})
 }
 
 func (h *HiveMetaStore) DropTable(dbName string, tableName string, deleteData bool) error {
+	hive, err := h.hiveFactory.getHive()
 	info, err := h.GetTableInfo(dbName, tableName)
 	if err != nil {
 		return err
 	}
-	err = h.hive.DropTable(dbName, tableName, deleteData)
+	err = hive.DropTable(dbName, tableName, deleteData)
 	if err != nil {
 		return err
 	}
@@ -87,7 +121,7 @@ func (h *HiveMetaStore) DropTable(dbName string, tableName string, deleteData bo
 			bucket, path := getBucketPath(info.MetadataLocation)
 			err := h.fileDeleter.Delete(context.Background(), bucket, path)
 			if err != nil {
-				logrus.Errorf("table dropped on hive but could not delete files if they are on s3")
+				logrus.Errorf("table dropped on hiveFactory but could not delete files if they are on s3")
 				return err
 			}
 		}

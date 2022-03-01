@@ -47,10 +47,10 @@ func TestPoolMetastore_Get(t *testing.T) {
 				metastore: HIVE,
 			},
 			fields: fields{
-				hive: &NamedMetastoreMock{name: "hive"},
+				hive: &NamedMetastoreMock{name: "hiveFactory"},
 				glue: &NamedMetastoreMock{name: "glue"},
 			},
-			want:    "hive",
+			want:    "hiveFactory",
 			wantErr: false,
 		},
 		{
@@ -59,7 +59,7 @@ func TestPoolMetastore_Get(t *testing.T) {
 				metastore: GLUE,
 			},
 			fields: fields{
-				hive: &NamedMetastoreMock{name: "hive"},
+				hive: &NamedMetastoreMock{name: "hiveFactory"},
 				glue: &NamedMetastoreMock{name: "glue"},
 			},
 			want:    "glue",
@@ -71,7 +71,7 @@ func TestPoolMetastore_Get(t *testing.T) {
 				metastore: "no",
 			},
 			fields: fields{
-				hive: &NamedMetastoreMock{name: "hive"},
+				hive: &NamedMetastoreMock{name: "hiveFactory"},
 				glue: &NamedMetastoreMock{name: "glue"},
 			},
 			want:    "",

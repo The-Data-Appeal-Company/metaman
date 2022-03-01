@@ -98,9 +98,9 @@ func getTableData(dbName *string) *awsGlue.TableData {
 				},
 			},
 			Compressed:   boolPtr(false),
-			InputFormat:  aws.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"),
+			InputFormat:  aws.String("org.apache.hadoop.hiveFactory.ql.io.parquet.MapredParquetInputFormat"),
 			Location:     aws.String("s3://bucket/table"),
-			OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"),
+			OutputFormat: aws.String("org.apache.hadoop.hiveFactory.ql.io.parquet.MapredParquetOutputFormat"),
 		},
 		TableType: aws.String("EXTERNAL_TABLE"),
 	}

@@ -42,6 +42,14 @@ type DropCall struct {
 	deleteData bool
 }
 
+type HiveFactoryMock struct {
+	hive Hive
+}
+
+func (h *HiveFactoryMock) getHive() (Hive, error) {
+	return h.hive, nil
+}
+
 type HiveMock struct {
 	createCalls []*hive_metastore.Table
 	dropCalls   []DropCall
@@ -122,11 +130,11 @@ func (h *HiveMock) GetTable(dbName string, tableName string) (*hive_metastore.Ta
 				},
 			},
 			Location:     "s3a://bucket/table",
-			InputFormat:  "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
-			OutputFormat: "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+			InputFormat:  "org.apache.hadoop.hiveFactory.ql.io.parquet.MapredParquetInputFormat",
+			OutputFormat: "org.apache.hadoop.hiveFactory.ql.io.parquet.MapredParquetOutputFormat",
 			SerdeInfo: &hive_metastore.SerDeInfo{
 				Name:             "table",
-				SerializationLib: "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe",
+				SerializationLib: "org.apache.hadoop.hiveFactory.ql.io.parquet.serde.ParquetHiveSerDe",
 				Parameters:       map[string]string{},
 			},
 			BucketCols: make([]string, 0),
@@ -148,7 +156,7 @@ func (h *HiveMock) GetTable(dbName string, tableName string) (*hive_metastore.Ta
 
 func TestHiveMetaStore_GetTableInfo(t *testing.T) {
 	type fields struct {
-		hive Hive
+		hiveFactory HiveFactory
 	}
 	type args struct {
 		dbName    string
@@ -164,7 +172,7 @@ func TestHiveMetaStore_GetTableInfo(t *testing.T) {
 		{
 			name: "shouldGetTable",
 			fields: fields{
-				hive: &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 			},
 			args: args{
 				dbName:    "pls",
@@ -217,7 +225,7 @@ func TestHiveMetaStore_GetTableInfo(t *testing.T) {
 		{
 			name: "shouldHandleError",
 			fields: fields{
-				hive: &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 			},
 			args: args{
 				dbName:    "aaa",
@@ -230,7 +238,7 @@ func TestHiveMetaStore_GetTableInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &HiveMetaStore{
-				hive: tt.fields.hive,
+				hiveFactory: tt.fields.hiveFactory,
 			}
 			got, err := h.GetTableInfo(tt.args.dbName, tt.args.tableName)
 			if (err != nil) != tt.wantErr {
@@ -244,7 +252,7 @@ func TestHiveMetaStore_GetTableInfo(t *testing.T) {
 
 func TestHiveMetaStore_GetTables(t *testing.T) {
 	type fields struct {
-		hive Hive
+		hiveFactory HiveFactory
 	}
 	type args struct {
 		dbName string
@@ -259,7 +267,7 @@ func TestHiveMetaStore_GetTables(t *testing.T) {
 		{
 			name: "shouldGetTables",
 			fields: fields{
-				hive: &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 			},
 			args: args{
 				dbName: "pls",
@@ -273,7 +281,7 @@ func TestHiveMetaStore_GetTables(t *testing.T) {
 		{
 			name: "shouldHandleEmptyDb",
 			fields: fields{
-				hive: &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 			},
 			args: args{
 				dbName: "emptydb",
@@ -284,7 +292,7 @@ func TestHiveMetaStore_GetTables(t *testing.T) {
 		{
 			name: "shouldHandleError",
 			fields: fields{
-				hive: &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 			},
 			args: args{
 				dbName: "nodb",
@@ -295,7 +303,7 @@ func TestHiveMetaStore_GetTables(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &HiveMetaStore{
-				hive: tt.fields.hive,
+				hiveFactory: tt.fields.hiveFactory,
 			}
 			got, err := h.GetTables(tt.args.dbName)
 			if (err != nil) != tt.wantErr {
@@ -309,7 +317,7 @@ func TestHiveMetaStore_GetTables(t *testing.T) {
 
 func TestHiveMetaStore_CreateTable(t *testing.T) {
 	type fields struct {
-		hive Hive
+		hiveFactory HiveFactory
 	}
 	type args struct {
 		dbName string
@@ -324,7 +332,7 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 		{
 			name: "shouldCreateTable",
 			fields: fields{
-				hive: &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 			},
 			args: args{
 				dbName: "pls",
@@ -349,7 +357,7 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 		{
 			name: "shouldErrorWhenMetastoreError",
 			fields: fields{
-				hive: &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 			},
 			args: args{
 				dbName: "errdb",
@@ -370,7 +378,7 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 		{
 			name: "shouldErrorWhenNoColumnsSpecified",
 			fields: fields{
-				hive: &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 			},
 			args: args{
 				dbName: "pls",
@@ -387,13 +395,13 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			h := &HiveMetaStore{
-				hive: tt.fields.hive,
+				hiveFactory: tt.fields.hiveFactory,
 			}
 			if err := h.CreateTable(tt.args.dbName, tt.args.table); (err != nil) != tt.wantErr {
 				t.Errorf("CreateTable() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			mock := tt.fields.hive.(*HiveMock)
+			mock := tt.fields.hiveFactory.(*HiveFactoryMock).hive.(*HiveMock)
 			if len(tt.args.table.Columns) == 0 {
 				require.Len(t, mock.createCalls, 0)
 				return
@@ -417,7 +425,7 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 
 func TestHiveMetaStore_DropTable(t *testing.T) {
 	type fields struct {
-		hive        Hive
+		hiveFactory HiveFactory
 		fileDeleter deleter.FileDeleter
 		aux         AuxInfoRetriever
 	}
@@ -435,7 +443,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 		{
 			name: "shouldDropTableNoDeleteData",
 			fields: fields{
-				hive:        &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 				fileDeleter: &MockFileDeleter{},
 				aux:         &AuxMock{},
 			},
@@ -449,7 +457,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 		{
 			name: "shouldDropTableDeleteData",
 			fields: fields{
-				hive:        &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 				fileDeleter: &MockFileDeleter{},
 				aux:         &AuxMock{},
 			},
@@ -463,7 +471,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 		{
 			name: "shouldErrorWhenHiveError",
 			fields: fields{
-				hive:        &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 				fileDeleter: &MockFileDeleter{},
 				aux:         &AuxMock{},
 			},
@@ -477,7 +485,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 		{
 			name: "shouldErrorWhenGetTableInfoError",
 			fields: fields{
-				hive:        &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 				fileDeleter: &MockFileDeleter{},
 				aux:         &AuxMock{},
 			},
@@ -491,7 +499,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 		{
 			name: "shouldErrorWhenS3Error",
 			fields: fields{
-				hive: &HiveMock{},
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{}},
 				fileDeleter: &MockFileDeleter{
 					err: fmt.Errorf("error"),
 				},
@@ -507,12 +515,12 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := NewHiveMetaStore(tt.fields.hive, tt.fields.fileDeleter, tt.fields.aux)
+			h := NewHiveMetaStore(tt.fields.hiveFactory, tt.fields.fileDeleter, tt.fields.aux)
 			if err := h.DropTable(tt.args.dbName, tt.args.tableName, tt.args.deleteData); (err != nil) != tt.wantErr {
 				t.Errorf("DropTable() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			mock := tt.fields.hive.(*HiveMock)
+			mock := tt.fields.hiveFactory.(*HiveFactoryMock).hive.(*HiveMock)
 			if tt.args.tableName == "tab" {
 				require.Len(t, mock.dropCalls, 0)
 			} else {

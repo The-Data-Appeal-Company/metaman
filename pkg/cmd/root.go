@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/akolb1/gometastore/hmsclient"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go/aws"
@@ -75,18 +74,17 @@ func getMetastoreManager() (*manager.HiveGlueManager, error) {
 	if err != nil {
 		return nil, err
 	}
-	clientHive, err := hmsclient.Open(configuration.Metastore.Hive.Url, configuration.Metastore.Hive.Port)
-	if err != nil {
-		return nil, err
-	}
 
 	db, err := sql.Open(configuration.Db.Driver, configuration.Db.ConnectionString())
 	if err != nil {
 		return nil, err
 	}
 	aux := metastore.NewPgAuxInfoRetriever(db)
+
+	factory := metastore.NewHiveAlwaysRecreateFactory(configuration.Metastore.Hive.Url, configuration.Metastore.Hive.Port)
+
 	pool := metastore.NewPoolMetastore(
-		metastore.NewHiveMetaStore(clientHive, fileDeleter, aux),
+		metastore.NewHiveMetaStore(factory, fileDeleter, aux),
 		metastore.NewGlueMetaStore(awsGlue.New(sess), fileDeleter),
 	)
 	return manager.NewHiveGlueManager(pool), nil

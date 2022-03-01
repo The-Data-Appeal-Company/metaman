@@ -20,6 +20,10 @@ const (
 
 func FromInputOutput(input string) TableFormat {
 	switch input {
+	case "org.apache.hadoop.hiveFactory.ql.io.parquet.MapredParquetInputFormat":
+		fallthrough
+	case "org.apache.hadoop.hiveFactory.ql.io.parquet.MapredParquetOutputFormat":
+		fallthrough
 	case "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat":
 		fallthrough
 	case "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat":
