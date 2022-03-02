@@ -96,7 +96,9 @@ func (t TableFormat) SerdeParameters() map[string]string {
 func (t TableFormat) Parameters(location string) map[string]string {
 	switch t {
 	case PARQUET:
-		return nil
+		return map[string]string{
+			"EXTERNAL": "TRUE",
+		}
 	case ICEBERG:
 		return map[string]string{
 			"metadata_location": location,
