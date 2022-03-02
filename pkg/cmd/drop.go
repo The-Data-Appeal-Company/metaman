@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/metastore"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/model"
@@ -36,7 +37,12 @@ func drop(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return metaman.Drop(code, tables)
+	errors := metaman.Drop(code, tables)
+	var result error
+	for _, err = range errors {
+		result = multierror.Append(result, err)
+	}
+	return result
 }
 
 func mapDropCommands() (metastore.MetastoreCode, []model.DropArg, error) {

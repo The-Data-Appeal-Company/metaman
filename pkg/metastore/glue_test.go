@@ -14,11 +14,15 @@ import (
 
 type GlueMock struct {
 	glueiface.GlueAPI
-	createCalls []*glue.CreateTableInput
-	deleteCalls []*glue.DeleteTableInput
+	getTableError error
+	createCalls   []*glue.CreateTableInput
+	deleteCalls   []*glue.DeleteTableInput
 }
 
 func (g *GlueMock) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
+	if g.getTableError != nil {
+		return nil, g.getTableError
+	}
 	if *input.DatabaseName != "pls" || (*input.Name != "table" && *input.Name != "table1") {
 		return nil, fmt.Errorf("error")
 	}
@@ -410,6 +414,21 @@ func TestGlueMetaStore_DropTable(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "shouldNoErrorWhenNoTableFound",
+			fields: fields{
+				glue: &GlueMock{
+					getTableError: &glue.EntityNotFoundException{},
+				},
+				fileDeleter: &MockFileDeleter{},
+			},
+			args: args{
+				dbName:     "pls",
+				tableName:  "table",
+				deleteData: true,
+			},
+			wantErr: false,
+		},
+		{
 			name: "shouldErrorWhenS3Error",
 			fields: fields{
 				glue: &GlueMock{},
@@ -433,7 +452,7 @@ func TestGlueMetaStore_DropTable(t *testing.T) {
 				return
 			}
 			mock := tt.fields.glue.(*GlueMock)
-			if tt.args.tableName == "tab" {
+			if tt.args.tableName == "tab" || mock.getTableError != nil {
 				require.Len(t, mock.deleteCalls, 0)
 			} else {
 				require.Len(t, mock.deleteCalls, 1)
@@ -442,7 +461,7 @@ func TestGlueMetaStore_DropTable(t *testing.T) {
 			}
 
 			fileDeleter := tt.fields.fileDeleter.(*MockFileDeleter)
-			if tt.args.deleteData && (!tt.wantErr || fileDeleter.err != nil) {
+			if tt.args.deleteData && (!tt.wantErr || fileDeleter.err != nil) && mock.getTableError == nil {
 				require.Len(t, fileDeleter.paths["bucket"], 1)
 				require.Equal(t, "table", fileDeleter.paths["bucket"][0])
 			} else {

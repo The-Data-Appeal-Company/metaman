@@ -16,10 +16,11 @@ type Hive interface {
 	GetAllTables(dbName string) ([]string, error)
 	CreateTable(table *hive_metastore.Table) error
 	DropTable(dbName string, tableName string, deleteData bool) error
+	Close()
 }
 
 type HiveFactory interface {
-	getHive() (Hive, error)
+	GetHive() (Hive, error)
 }
 
 type HiveAlwaysRecreateFactory struct {
@@ -31,7 +32,7 @@ func NewHiveAlwaysRecreateFactory(hiveHost string, hivePort int) *HiveAlwaysRecr
 	return &HiveAlwaysRecreateFactory{hiveHost: hiveHost, hivePort: hivePort}
 }
 
-func (h *HiveAlwaysRecreateFactory) getHive() (Hive, error) {
+func (h *HiveAlwaysRecreateFactory) GetHive() (Hive, error) {
 	clientHive, err := hmsclient.Open(h.hiveHost, h.hivePort)
 	if err != nil {
 		return nil, err
@@ -50,18 +51,20 @@ func NewHiveMetaStore(hiveFactory HiveFactory, fileDeleter deleter.FileDeleter, 
 }
 
 func (h *HiveMetaStore) GetTables(dbName string) ([]string, error) {
-	hive, err := h.hiveFactory.getHive()
+	hive, err := h.hiveFactory.GetHive()
 	if err != nil {
 		return nil, err
 	}
+	defer hive.Close()
 	return hive.GetAllTables(dbName)
 }
 
 func (h *HiveMetaStore) GetTableInfo(dbName, tableName string) (model.TableInfo, error) {
-	hive, err := h.hiveFactory.getHive()
+	hive, err := h.hiveFactory.GetHive()
 	if err != nil {
 		return model.TableInfo{}, err
 	}
+	defer hive.Close()
 	table, err := hive.GetTable(dbName, tableName)
 	if err != nil {
 		return model.TableInfo{}, err
@@ -86,10 +89,11 @@ func (h *HiveMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 	if len(table.Columns) == 0 {
 		return fmt.Errorf("cannot Create table with 0 columns")
 	}
-	hive, err := h.hiveFactory.getHive()
+	hive, err := h.hiveFactory.GetHive()
 	if err != nil {
 		return err
 	}
+	defer hive.Close()
 	return hive.CreateTable(&hive_metastore.Table{
 		TableName: table.Name,
 		DbName:    dbName,
@@ -107,9 +111,16 @@ func (h *HiveMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 }
 
 func (h *HiveMetaStore) DropTable(dbName string, tableName string, deleteData bool) error {
-	hive, err := h.hiveFactory.getHive()
+	hive, err := h.hiveFactory.GetHive()
+	if err != nil {
+		return err
+	}
+	defer hive.Close()
 	info, err := h.GetTableInfo(dbName, tableName)
 	if err != nil {
+		if _, ok := err.(*hive_metastore.NoSuchObjectException); ok {
+			return nil
+		}
 		return err
 	}
 	err = hive.DropTable(dbName, tableName, deleteData)

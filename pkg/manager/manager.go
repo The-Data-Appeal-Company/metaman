@@ -1,13 +1,14 @@
 package manager
 
 import (
+	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/metastore"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/model"
 )
 
 type Manager interface {
-	Drop(metastore metastore.MetastoreCode, tables []model.DropArg) error
+	Drop(metastore metastore.MetastoreCode, tables []model.DropArg) []error
 	Create(metastore []metastore.MetastoreCode, tables []model.DatabaseTables) error
 	Sync(sourceMetastore metastore.MetastoreCode, targetMetastore metastore.MetastoreCode, dbName string, tables []string, delete bool) error
 }
@@ -20,21 +21,21 @@ func NewHiveGlueManager(pool metastore.Pool) *HiveGlueManager {
 	return &HiveGlueManager{pool: pool}
 }
 
-func (h *HiveGlueManager) Drop(metastore metastore.MetastoreCode, tables []model.DropArg) error {
+func (h *HiveGlueManager) Drop(metastore metastore.MetastoreCode, tables []model.DropArg) []error {
 	meta, err := h.pool.Get(metastore)
 	if err != nil {
-		return err
+		return []error{err}
 	}
-	var result error
+	var errors []error
 	for _, dbTab := range tables {
 		for _, tab := range dbTab.Tables {
-			err := meta.DropTable(dbTab.Db, tab.Table, tab.DeleteData)
+			err = meta.DropTable(dbTab.Db, tab.Table, tab.DeleteData)
 			if err != nil {
-				result = multierror.Append(result, err)
+				errors = append(errors, fmt.Errorf("db: %s, table: %s, error: %s", dbTab.Db, tab.Table, err.Error()))
 			}
 		}
 	}
-	return result
+	return errors
 }
 
 func (h *HiveGlueManager) Create(metastores []metastore.MetastoreCode, tables []model.DatabaseTables) error {

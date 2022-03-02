@@ -22,13 +22,13 @@ type ManagerMock struct {
 	syncError   error
 }
 
-func (m *ManagerMock) Drop(metastore metastore.MetastoreCode, tables []model.DropArg) error {
+func (m *ManagerMock) Drop(metastore metastore.MetastoreCode, tables []model.DropArg) []error {
 	m.dropCalls = append(m.dropCalls, model.DropApiRequest{
 		Metastore: string(metastore),
 		Tables:    tables,
 	})
 	if m.dropError != nil {
-		return m.dropError
+		return []error{m.dropError}
 	}
 	return nil
 }

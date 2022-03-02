@@ -107,10 +107,10 @@ func (a *ApiHandler) handleDrop(c *gin.Context) {
 		})
 		return
 	}
-	err = a.manager.Drop(code, request.Tables)
-	if err != nil {
+	errs := a.manager.Drop(code, request.Tables)
+	if errs != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"errors": errorsAsStrings(errs),
 		})
 		return
 	}
@@ -141,4 +141,12 @@ func (a *ApiHandler) handleCreate(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusOK)
+}
+
+func errorsAsStrings(errs []error) []string {
+	errStrings := make([]string, len(errs))
+	for i, err := range errs {
+		errStrings[i] = err.Error()
+	}
+	return errStrings
 }

@@ -71,6 +71,9 @@ func (g *GlueMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 func (g *GlueMetaStore) DropTable(dbName string, tableName string, deleteData bool) error {
 	info, err := g.GetTableInfo(dbName, tableName)
 	if err != nil {
+		if _, ok := err.(*glue.EntityNotFoundException); ok {
+			return nil
+		}
 		return err
 	}
 	_, err = g.glue.DeleteTable(&glue.DeleteTableInput{

@@ -46,13 +46,14 @@ type HiveFactoryMock struct {
 	hive Hive
 }
 
-func (h *HiveFactoryMock) getHive() (Hive, error) {
+func (h *HiveFactoryMock) GetHive() (Hive, error) {
 	return h.hive, nil
 }
 
 type HiveMock struct {
-	createCalls []*hive_metastore.Table
-	dropCalls   []DropCall
+	getTableInfoError error
+	createCalls       []*hive_metastore.Table
+	dropCalls         []DropCall
 }
 
 func (h *HiveMock) GetAllTables(dbName string) ([]string, error) {
@@ -88,6 +89,9 @@ func (h *HiveMock) DropTable(dbName string, tableName string, deleteData bool) e
 func (h *HiveMock) GetTable(dbName string, tableName string) (*hive_metastore.Table, error) {
 	if dbName != "pls" || (tableName != "table" && tableName != "table1") {
 		return nil, fmt.Errorf("NoSuchObject")
+	}
+	if h.getTableInfoError != nil {
+		return nil, h.getTableInfoError
 	}
 	return &hive_metastore.Table{
 		TableName:  "table",
@@ -153,6 +157,8 @@ func (h *HiveMock) GetTable(dbName string, tableName string) (*hive_metastore.Ta
 		RewriteEnabled: boolPtr(false),
 	}, nil
 }
+
+func (h *HiveMock) Close() {}
 
 func TestHiveMetaStore_GetTableInfo(t *testing.T) {
 	type fields struct {
@@ -512,6 +518,22 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "shouldNoErrorWhenTableNotFound",
+			fields: fields{
+				hiveFactory: &HiveFactoryMock{hive: &HiveMock{
+					getTableInfoError: hive_metastore.NewNoSuchObjectException(),
+				}},
+				fileDeleter: &MockFileDeleter{},
+				aux:         &AuxMock{},
+			},
+			args: args{
+				dbName:     "pls",
+				tableName:  "table",
+				deleteData: true,
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -521,7 +543,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 				return
 			}
 			mock := tt.fields.hiveFactory.(*HiveFactoryMock).hive.(*HiveMock)
-			if tt.args.tableName == "tab" {
+			if tt.args.tableName == "tab" || mock.getTableInfoError != nil {
 				require.Len(t, mock.dropCalls, 0)
 			} else {
 				require.Len(t, mock.dropCalls, 1)
@@ -530,7 +552,7 @@ func TestHiveMetaStore_DropTable(t *testing.T) {
 				require.Equal(t, mock.dropCalls[0].deleteData, tt.args.deleteData)
 			}
 			fileDeleter := tt.fields.fileDeleter.(*MockFileDeleter)
-			if tt.args.deleteData && (!tt.wantErr || fileDeleter.err != nil) {
+			if tt.args.deleteData && (!tt.wantErr || fileDeleter.err != nil) && mock.getTableInfoError == nil {
 				require.Len(t, fileDeleter.paths["bucket"], 1)
 				require.Equal(t, "table", fileDeleter.paths["bucket"][0])
 			} else {

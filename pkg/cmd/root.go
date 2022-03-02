@@ -82,7 +82,6 @@ func getMetastoreManager() (*manager.HiveGlueManager, error) {
 	aux := metastore.NewPgAuxInfoRetriever(db)
 
 	factory := metastore.NewHiveAlwaysRecreateFactory(configuration.Metastore.Hive.Url, configuration.Metastore.Hive.Port)
-
 	pool := metastore.NewPoolMetastore(
 		metastore.NewHiveMetaStore(factory, fileDeleter, aux),
 		metastore.NewGlueMetaStore(awsGlue.New(sess), fileDeleter),
