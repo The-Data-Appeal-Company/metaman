@@ -138,6 +138,7 @@ type DatabaseTables struct {
 type TableInfo struct {
 	Name             string      `json:"name"`
 	Columns          []Column    `json:"columns"`
+	Partitions       []Column    `json:"partitions"`
 	MetadataLocation string      `json:"metadata_location"`
 	Format           TableFormat `json:"format"`
 }

@@ -80,6 +80,7 @@ func (h *HiveMetaStore) GetTableInfo(dbName, tableName string) (model.TableInfo,
 	return model.TableInfo{
 		Name:             table.GetTableName(),
 		Columns:          mapColumnsHive(table.Sd.Cols),
+		Partitions:       mapColumnsHive(table.PartitionKeys),
 		MetadataLocation: location,
 		Format:           format,
 	}, nil
@@ -105,8 +106,9 @@ func (h *HiveMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 			OutputFormat: table.Format.OutputFormat(),
 			SerdeInfo:    mapSerdeInfoHive(table.Format.SerDeInfo()),
 		},
-		Parameters: table.Format.Parameters(convertS3Format(HIVE, table.MetadataLocation)),
-		TableType:  "EXTERNAL_TABLE",
+		PartitionKeys: unmapColumnsHive(table.Partitions),
+		Parameters:    table.Format.Parameters(convertS3Format(HIVE, table.MetadataLocation)),
+		TableType:     "EXTERNAL_TABLE",
 	})
 }
 

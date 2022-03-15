@@ -44,6 +44,7 @@ func (g *GlueMetaStore) GetTableInfo(dbName, tableName string) (model.TableInfo,
 	return model.TableInfo{
 		Name:             stringFromPtr(table.Table.Name),
 		Columns:          mapColumnsGlue(table.Table.StorageDescriptor.Columns),
+		Partitions:       mapColumnsGlue(table.Table.PartitionKeys),
 		MetadataLocation: stringFromPtr(table.Table.StorageDescriptor.Location),
 		Format:           model.FromInputOutput(stringFromPtr(table.Table.StorageDescriptor.InputFormat)),
 	}, nil
@@ -61,8 +62,9 @@ func (g *GlueMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 				OutputFormat: aws.String(table.Format.OutputFormat()),
 				SerdeInfo:    mapSerdeInfoGlue(table.Format.SerDeInfo()),
 			},
-			TableType:  table.Format.TableType(),
-			Parameters: mapParametersGlue(table.Format.Parameters(convertS3Format(GLUE, table.MetadataLocation))),
+			PartitionKeys: unmapColumnsGlue(table.Partitions),
+			TableType:     table.Format.TableType(),
+			Parameters:    mapParametersGlue(table.Format.Parameters(convertS3Format(GLUE, table.MetadataLocation))),
 		},
 	})
 	return err

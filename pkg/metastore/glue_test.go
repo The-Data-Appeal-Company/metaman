@@ -66,6 +66,12 @@ func getTableData(dbName *string) *awsGlue.TableData {
 		IsRegisteredWithLakeFormation: boolPtr(false),
 		Name:                          aws.String("table"),
 		Owner:                         aws.String("sap"),
+		PartitionKeys: []*glue.Column{
+			{
+				Name: aws.String("partition"),
+				Type: aws.String("bigint"),
+			},
+		},
 		StorageDescriptor: &glue.StorageDescriptor{
 			Columns: []*glue.Column{
 				{
@@ -224,6 +230,12 @@ func TestGlueMetaStore_GetTableInfo(t *testing.T) {
 						Type: model.ColumnType{SqlType: model.TIMESTAMP},
 					},
 				},
+				Partitions: []model.Column{
+					{
+						Name: "partition",
+						Type: model.ColumnType{SqlType: model.BIGINT},
+					},
+				},
 				MetadataLocation: "s3://bucket/table",
 				Format:           model.PARQUET,
 			},
@@ -290,6 +302,12 @@ func TestGlueMetaStore_CreateTable(t *testing.T) {
 							Type: model.ColumnType{SqlType: model.VARCHAR, Length: 200},
 						},
 					},
+					Partitions: []model.Column{
+						{
+							Name: "partition",
+							Type: model.ColumnType{SqlType: model.BIGINT},
+						},
+					},
 					MetadataLocation: "s3:/bucket/table",
 					Format:           model.PARQUET,
 				},
@@ -342,6 +360,11 @@ func TestGlueMetaStore_CreateTable(t *testing.T) {
 			for i, column := range mock.createCalls[0].TableInput.StorageDescriptor.Columns {
 				require.Equal(t, tt.args.table.Columns[i].Name, *column.Name)
 				require.Equal(t, model.UnmapColumnType(tt.args.table.Columns[i].Type), *column.Type)
+			}
+			require.Len(t, mock.createCalls[0].TableInput.PartitionKeys, len(tt.args.table.Partitions))
+			for i, column := range mock.createCalls[0].TableInput.PartitionKeys {
+				require.Equal(t, tt.args.table.Partitions[i].Name, *column.Name)
+				require.Equal(t, model.UnmapColumnType(tt.args.table.Partitions[i].Type), *column.Type)
 			}
 		})
 	}

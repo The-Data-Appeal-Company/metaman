@@ -151,7 +151,12 @@ func (h *HiveMock) GetTable(dbName string, tableName string) (*hive_metastore.Ta
 			},
 			StoredAsSubDirectories: boolPtr(false),
 		},
-		PartitionKeys:  make([]*hive_metastore.FieldSchema, 0),
+		PartitionKeys: []*hive_metastore.FieldSchema{
+			{
+				Name: "partition",
+				Type: "bigint",
+			},
+		},
 		Parameters:     map[string]string{},
 		TableType:      "EXTERNAL_TABLE",
 		RewriteEnabled: boolPtr(false),
@@ -221,6 +226,12 @@ func TestHiveMetaStore_GetTableInfo(t *testing.T) {
 					{
 						Name: "time_stamp",
 						Type: model.ColumnType{SqlType: model.TIMESTAMP},
+					},
+				},
+				Partitions: []model.Column{
+					{
+						Name: "partition",
+						Type: model.ColumnType{SqlType: model.BIGINT},
 					},
 				},
 				MetadataLocation: "s3a://bucket/table",
@@ -354,6 +365,12 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 							Type: model.ColumnType{SqlType: model.VARCHAR, Length: 200},
 						},
 					},
+					Partitions: []model.Column{
+						{
+							Name: "partition",
+							Type: model.ColumnType{SqlType: model.BIGINT},
+						},
+					},
 					MetadataLocation: "s3://bucket/table",
 					Format:           model.PARQUET,
 				},
@@ -421,6 +438,13 @@ func TestHiveMetaStore_CreateTable(t *testing.T) {
 			require.Len(t, mock.createCalls[0].Sd.Cols, len(tt.args.table.Columns))
 			for i, column := range tt.args.table.Columns {
 				require.Equal(t, mock.createCalls[0].Sd.Cols[i], &hive_metastore.FieldSchema{
+					Name: column.Name,
+					Type: model.UnmapColumnType(column.Type),
+				})
+			}
+			require.Len(t, mock.createCalls[0].PartitionKeys, len(tt.args.table.Partitions))
+			for i, column := range tt.args.table.Partitions {
+				require.Equal(t, mock.createCalls[0].PartitionKeys[i], &hive_metastore.FieldSchema{
 					Name: column.Name,
 					Type: model.UnmapColumnType(column.Type),
 				})
