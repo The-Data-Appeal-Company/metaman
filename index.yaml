@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   metaman:
   - apiVersion: v2
+    appVersion: 0.1.1
+    created: "2022-03-15T10:47:46.417411208Z"
+    description: Metaman Helm chart for Kubernetes
+    digest: f1ce273fc671032fdff595adabc60dfc52a53c84d132ff2e53e95f7ee4461678
+    name: metaman
+    type: application
+    urls:
+    - https://github.com/The-Data-Appeal-Company/metaman/releases/download/metaman-0.1.1/metaman-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
     appVersion: 0.1.0
     created: "2022-03-02T16:30:15.483590974Z"
     description: Metaman Helm chart for Kubernetes
@@ -71,4 +81,4 @@ entries:
     urls:
     - https://github.com/The-Data-Appeal-Company/metaman/releases/download/metaman-0.0.2/metaman-0.0.2.tgz
     version: 0.0.2
-generated: "2022-03-02T16:30:15.483905994Z"
+generated: "2022-03-15T10:47:46.417551709Z"
