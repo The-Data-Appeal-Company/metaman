@@ -3,7 +3,7 @@ replicaCount: 2
 image:
   repository: datappeal/metaman
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 imagePullSecrets: [ ]
 nameOverride: ""
