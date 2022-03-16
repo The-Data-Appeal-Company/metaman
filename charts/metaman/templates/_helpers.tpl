@@ -36,7 +36,7 @@ Common labels
 */}}
 {{- define "metaman.labels" -}}
 helm.sh/chart: {{ include "metaman.chart" . }}
-{{ include "metaman.selectorLabels" . }}
+{{ include "metaman.podsLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -49,6 +49,15 @@ Selector labels
 {{- define "metaman.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "metaman.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+
+
+
+{{/*
+Pods labels
+*/}}
+{{- define "metaman.podsLabels" -}}
+{{ include "metaman.selectorLabels" . }}
 version: {{ .Chart.Version | quote }}
 {{- end -}}
 
