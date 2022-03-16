@@ -36,7 +36,6 @@ Common labels
 */}}
 {{- define "metaman.labels" -}}
 helm.sh/chart: {{ include "metaman.chart" . }}
-version: {{ .Chart.Version | quote }}
 {{ include "metaman.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
@@ -50,6 +49,7 @@ Selector labels
 {{- define "metaman.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "metaman.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+version: {{ .Chart.Version | quote }}
 {{- end -}}
 
 {{/*
