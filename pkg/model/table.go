@@ -14,8 +14,9 @@ type SerDeInfo struct {
 type TableFormat string
 
 const (
-	PARQUET TableFormat = "parquet"
-	ICEBERG             = "iceberg"
+	PARQUET        TableFormat = "parquet"
+	ICEBERG                    = "iceberg"
+	EXTERNAL_TABLE             = "EXTERNAL_TABLE"
 )
 
 func FromInputOutput(input string) TableFormat {
@@ -102,21 +103,21 @@ func (t TableFormat) Parameters(location string) map[string]string {
 	case ICEBERG:
 		return map[string]string{
 			"metadata_location": location,
-			"table_type":        "ICEBERG",
+			"table_type":        ICEBERG,
 		}
 	default:
 		return nil
 	}
 }
 
-func (t TableFormat) TableType() *string {
+func (t TableFormat) TableType() string {
 	switch t {
 	case PARQUET:
-		return nil
+		return EXTERNAL_TABLE
 	case ICEBERG:
-		return strPtr(ICEBERG)
+		return ICEBERG
 	default:
-		return nil
+		return ""
 	}
 }
 

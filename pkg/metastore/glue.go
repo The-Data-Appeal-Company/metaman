@@ -63,7 +63,7 @@ func (g *GlueMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 				SerdeInfo:    mapSerdeInfoGlue(table.Format.SerDeInfo()),
 			},
 			PartitionKeys: unmapColumnsGlue(table.Partitions),
-			TableType:     table.Format.TableType(),
+			TableType:     aws.String(table.Format.TableType()),
 			Parameters:    mapParametersGlue(table.Format.Parameters(convertS3Format(GLUE, table.MetadataLocation))),
 		},
 	})

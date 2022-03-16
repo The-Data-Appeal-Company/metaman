@@ -108,7 +108,7 @@ func (h *HiveMetaStore) CreateTable(dbName string, table model.TableInfo) error 
 		},
 		PartitionKeys: unmapColumnsHive(table.Partitions),
 		Parameters:    table.Format.Parameters(convertS3Format(HIVE, table.MetadataLocation)),
-		TableType:     "EXTERNAL_TABLE",
+		TableType:     table.Format.TableType(),
 	})
 }
 
