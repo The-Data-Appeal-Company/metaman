@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterWorkflowTemplate
+metadata:
+  name:  {{ include "metaman.drop.fullname" . }}-drop-template
+spec:
+  arguments:
+    parameters:
+      - name: db
+        value: database
+      - name: metastore
+        value: glue
+      - name: tables
+        value: table1,table2
+    templates:
+      - name: metaman-dop-template
+        inputs:
+          parameters:
+            - name: db
+            - name: redis-sentinel-port
+            - name: redis-db
+        volumes:
+          - name: config-volume
+            configMap:
+              name: {{ include "narwhal.configmap.config" . }}
+        container:
+          image: {{.Values.image.repository}}:{{.Values.image.tag}}
+            args: [ "/config/config.yml" ]
+            volumeMounts:
+              - mountPath: /config
+                name: config-volume
+          command: [ metaman ]
+          args:
+            - >-
+              drop -c /config/config.yml -d {{inputs.parameters.db}} -m {{inputs.parameters.metastore}} -t {{inputs.parameters.tables}}
+          resources:
+            {{- with .Values.resources}}
