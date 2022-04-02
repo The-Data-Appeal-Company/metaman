@@ -25,7 +25,7 @@ func init() {
 	syncCmd.Flags().StringVarP(&sourceMetastore, "source", "s", "", "source metastore")
 	syncCmd.Flags().StringVarP(&targetMetastore, "target", "t", "", "target metastore")
 	syncCmd.Flags().StringVarP(&database, "database", "d", "", "database name")
-	syncCmd.Flags().StringArray("tables", sourceTables, "list of tables to sync to target")
+	syncCmd.Flags().StringSliceVarP(&sourceTables, "tables", "", []string{}, "list of tables to sync to target")
 	syncCmd.Flags().BoolVar(&deleteTables, "delete-tables", false, "delete tables from target non existing in source")
 }
 

@@ -24,7 +24,7 @@ var (
 func init() {
 	dropCmd.Flags().StringVarP(&metastoreName, "metastore", "m", "", "metastore")
 	dropCmd.Flags().StringVarP(&database, "database", "d", "", "database name")
-	dropCmd.Flags().StringArray("tables", tables, "list of table names")
+	dropCmd.Flags().StringSliceVarP(&tables, "tables", "t", []string{}, "list of table names")
 	dropCmd.Flags().BoolVar(&deleteData, "delete-data", false, "delete table data")
 }
 
