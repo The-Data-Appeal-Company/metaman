@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	createCmd.Flags().StringArray("metastores", metastoreNames, "list of metastore")
+	createCmd.Flags().StringSliceVarP(&metastoreNames, "metastores", "m", []string{}, "list of metastore")
 	createCmd.Flags().StringVarP(&database, "database", "d", "", "database name")
 	createCmd.Flags().StringVarP(&tablesDefinitionPath, "tables-definition", "t", "", "path to json with tables definition")
 }

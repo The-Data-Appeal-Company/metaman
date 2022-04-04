@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ClusterWorkflowTemplate
 metadata:
-  name:  {{ include "metaman.drop.fullname" . }}-sync-template
+  name: {{ include "metaman.fullname" . }}-sync-template
 spec:
   arguments:
     parameters:
@@ -14,21 +14,25 @@ spec:
       - name: tables
         value: table1,table2
     templates:
-      - name: metaman-dop-template
+      - name: metaman-sync-template
         inputs:
           parameters:
             - name: db
-            - name: redis-sentinel-port
-            - name: redis-db
+            - name: source_metastore
+            - name: target_metastore
+            - name: tables
+        volumes:
+          - name: config-volume
+            configMap:
+              name: {{ .Release.Name }}-configmap
         container:
           image: {{.Values.image.repository}}:{{.Values.image.tag}}
-            args: [ "/config/config.yml" ]
-            volumeMounts:
-              - mountPath: /config
-                name: config-volume
+          volumeMounts:
+            - mountPath: /config
+              name: config-volume
           command: [ metaman ]
           args:
             - >-
-              sync -c /config/config.yml -d {{inputs.parameters.db}} -s {{inputs.parameters.source_metastore}} -t {{inputs.parameters.target_metastore}} --tables {{inputs.parameters.tables}}
+              sync -c /config/config.yml -d {{printf "{{inputs.parameters.db}} -s {{inputs.parameters.source_metastore}} -t {{inputs.parameters.target_metastore}} --tables {{inputs.parameters.tables}}"}}
           resources:
-            {{- with .Values.resources}}
+            {{.Values.resources}}
