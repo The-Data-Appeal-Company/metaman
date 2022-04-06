@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ClusterWorkflowTemplate
+metadata:
+  name: {{ include "metaman.fullname" . }}-drop-template
+spec:
+  arguments:
+    parameters:
+      - name: db
+        value: database
+      - name: metastore
+        value: glue
+      - name: tables
+        value: table1,table2
+    templates:
+      - name: metaman-drop-template
+        inputs:
+          parameters:
+            - name: db
+            - name: metastore
+            - name: tables
+        volumes:
+          - name: config-volume
+            configMap:
+              name: {{ .Release.Name }}-configmap
+        container:
+          image: {{.Values.image.repository}}:{{.Values.image.tag}}
+          volumeMounts:
+            - mountPath: /config
+              name: config-volume
+          command: [ metaman ]
+          args:
+            - >-
+              drop -c /config/config.yml -d {{printf "{{inputs.parameters.db}} -m {{inputs.parameters.metastore}} -t {{inputs.parameters.tables}}"}}
+          resources:
+            {{.Values.resources}}
