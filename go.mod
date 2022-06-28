@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/akolb1/gometastore v0.0.0-20211122182549-3be600732d4b
-	github.com/aws/aws-sdk-go v1.43.18
+	github.com/aws/aws-sdk-go v1.44.42
 	github.com/aws/aws-sdk-go-v2/config v1.15.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.0
 	github.com/banzaicloud/go-gin-prometheus v0.1.0
@@ -14,7 +14,7 @@ require (
 	github.com/lib/pq v1.10.4
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.5
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -61,5 +61,5 @@ require (
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
