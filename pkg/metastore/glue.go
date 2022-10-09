@@ -20,15 +20,22 @@ func NewGlueMetaStore(glue glueiface.GlueAPI, fileDeleter deleter.FileDeleter) *
 }
 
 func (g *GlueMetaStore) GetTables(dbName string) ([]string, error) {
-	tables, err := g.glue.GetTables(&glue.GetTablesInput{
-		DatabaseName: &dbName,
-	})
-	if err != nil {
-		return nil, err
-	}
-	ts := make([]string, len(tables.TableList))
-	for i, table := range tables.TableList {
-		ts[i] = *table.Name
+	ts := make([]string, 0)
+	hasNextToken := true
+	var nextToken *string
+	for hasNextToken {
+		tables, err := g.glue.GetTables(&glue.GetTablesInput{
+			NextToken:    nextToken,
+			DatabaseName: &dbName,
+		})
+		if err != nil {
+			return nil, err
+		}
+		hasNextToken = tables.NextToken != nil
+		nextToken = tables.NextToken
+		for _, table := range tables.TableList {
+			ts = append(ts, *table.Name)
+		}
 	}
 	return ts, nil
 }
