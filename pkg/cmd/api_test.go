@@ -112,6 +112,181 @@ func TestApiHandler_shouldCreate(t *testing.T) {
 	}
 }
 
+func TestApiHandler_handleDrop(t *testing.T) {
+	type args struct {
+		mock    ManagerMock
+		request model.DropApiRequest
+		wantErr bool
+	}
+
+	var result error
+	result = multierror.Append(result, fmt.Errorf("error"))
+	tests := []args{
+		{
+			mock: ManagerMock{},
+			request: model.DropApiRequest{
+				Metastore: "hive",
+				Tables: []model.DropArg{
+					{
+						Db: "test",
+						Tables: []model.DropTable{
+							{
+								Table:      "table",
+								DeleteData: false,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			mock: ManagerMock{
+				dropError: result,
+			},
+			wantErr: true,
+			request: model.DropApiRequest{
+				Metastore: "hive",
+				Tables: []model.DropArg{
+					{
+						Db: "test",
+						Tables: []model.DropTable{
+							{
+								Table:      "table",
+								DeleteData: false,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			mock:    ManagerMock{},
+			wantErr: true,
+			request: model.DropApiRequest{
+				Metastore: "non_supported_metastore",
+				Tables:    []model.DropArg{},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		handler := ApiHandler{manager: &test.mock}
+		router := handler.setupRouter()
+		w := httptest.NewRecorder()
+		marshal, err := json.Marshal(test.request)
+		require.NoError(t, err)
+		req, _ := http.NewRequest("DELETE", "/drop", strings.NewReader(string(marshal)))
+		router.ServeHTTP(w, req)
+
+		if test.wantErr {
+			if test.mock.dropError != nil {
+				require.Equal(t, w.Code, http.StatusInternalServerError)
+			} else {
+				require.Equal(t, w.Code, http.StatusBadRequest)
+			}
+		} else {
+			require.Equal(t, w.Code, http.StatusOK)
+		}
+		if !test.wantErr || test.mock.dropError != nil {
+			require.Len(t, test.mock.dropCalls, 1)
+			require.Equal(t, test.mock.dropCalls[0], test.request)
+		} else {
+			require.Len(t, test.mock.dropCalls, 0)
+		}
+	}
+}
+
+func TestApiHandler_handleSync(t *testing.T) {
+	type args struct {
+		mock    ManagerMock
+		request model.SyncApiRequest
+		wantErr bool
+	}
+
+	var result error
+	result = multierror.Append(result, fmt.Errorf("error"))
+	tests := []args{
+		{
+			mock: ManagerMock{},
+			request: model.SyncApiRequest{
+				Source: "hive",
+				Target: "glue",
+				DbName: "test",
+				Delete: false,
+			},
+		},
+		{
+			mock: ManagerMock{
+				syncError: result,
+			},
+			wantErr: true,
+			request: model.SyncApiRequest{
+				Source: "hive",
+				Target: "glue",
+				DbName: "test",
+				Delete: false,
+			},
+		},
+		{
+			mock:    ManagerMock{},
+			wantErr: true,
+			request: model.SyncApiRequest{
+				Source: "not_supported_metastore",
+				Target: "glue",
+				DbName: "test",
+				Delete: false,
+			},
+		},
+
+		{
+			mock:    ManagerMock{},
+			wantErr: true,
+			request: model.SyncApiRequest{
+				Source: "glue",
+				Target: "not_supported_metastore",
+				DbName: "test",
+				Delete: false,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		handler := ApiHandler{manager: &test.mock}
+		router := handler.setupRouter()
+		w := httptest.NewRecorder()
+		marshal, err := json.Marshal(test.request)
+		require.NoError(t, err)
+		req, _ := http.NewRequest("PUT", "/sync", strings.NewReader(string(marshal)))
+		router.ServeHTTP(w, req)
+
+		if test.wantErr {
+			if test.mock.syncError != nil {
+				require.Equal(t, w.Code, http.StatusInternalServerError)
+			} else {
+				require.Equal(t, w.Code, http.StatusBadRequest)
+			}
+		} else {
+			require.Equal(t, w.Code, http.StatusOK)
+		}
+		if !test.wantErr || test.mock.syncError != nil {
+			require.Len(t, test.mock.syncCalls, 1)
+			require.Equal(t, test.mock.syncCalls[0], test.request)
+		} else {
+			require.Len(t, test.mock.syncCalls, 0)
+		}
+	}
+}
+
+func TestApiHandler_healthcheck(t *testing.T) {
+	handler := ApiHandler{manager: &ManagerMock{}}
+	router := handler.setupRouter()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/healthcheck", nil)
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, w.Code, http.StatusOK)
+}
+
 func getCreateApiRequest(met []string) model.CreateApiRequest {
 	return model.CreateApiRequest{
 		Metastores: met,
