@@ -59,6 +59,35 @@ func (g *GlueMock) DeleteTable(input *glue.DeleteTableInput) (*glue.DeleteTableO
 	return &glue.DeleteTableOutput{}, nil
 }
 
+type GlueMockGetTablesPaginated struct {
+	glueiface.GlueAPI
+}
+
+func (g *GlueMockGetTablesPaginated) GetTable(input *glue.GetTableInput) (*glue.GetTableOutput, error) {
+	return &glue.GetTableOutput{}, nil
+}
+
+func (g *GlueMockGetTablesPaginated) GetTables(input *glue.GetTablesInput) (*glue.GetTablesOutput, error) {
+	var nextToken *string
+	if input.NextToken == nil {
+		nextToken = aws.String("token")
+	}
+	return &glue.GetTablesOutput{
+		NextToken: nextToken,
+		TableList: []*glue.TableData{
+			getTableData(input.DatabaseName),
+		},
+	}, nil
+}
+
+func (g *GlueMockGetTablesPaginated) CreateTable(input *glue.CreateTableInput) (*glue.CreateTableOutput, error) {
+	return &glue.CreateTableOutput{}, nil
+}
+
+func (g *GlueMockGetTablesPaginated) DeleteTable(input *glue.DeleteTableInput) (*glue.DeleteTableOutput, error) {
+	return &glue.DeleteTableOutput{}, nil
+}
+
 func getTableData(dbName *string) *awsGlue.TableData {
 	return &awsGlue.TableData{
 		CatalogId:                     aws.String("11111111111"),
@@ -139,6 +168,17 @@ func TestGlueMetaStore_GetTables(t *testing.T) {
 				dbName: "pls",
 			},
 			want:    []string{"table"},
+			wantErr: false,
+		},
+		{
+			name: "shouldGetTablesPaginated",
+			fields: fields{
+				glue: &GlueMockGetTablesPaginated{},
+			},
+			args: args{
+				dbName: "pls",
+			},
+			want:    []string{"table", "table"},
 			wantErr: false,
 		},
 		{
