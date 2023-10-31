@@ -1,4 +1,4 @@
-ARG GO_VERSION=1.17
+ARG GO_VERSION=1.20
 ARG APP_NAME="metaman"
 
 FROM golang:${GO_VERSION}-alpine AS builder
