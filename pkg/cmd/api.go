@@ -62,6 +62,7 @@ func (a *ApiHandler) handleSync(c *gin.Context) {
 	var request model.SyncApiRequest
 	err := c.BindJSON(&request)
 	if err != nil {
+		logrus.Warnf("sync bad request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
@@ -69,6 +70,7 @@ func (a *ApiHandler) handleSync(c *gin.Context) {
 	}
 	source, err := mapMetastoreCode(request.Source)
 	if err != nil {
+		logrus.Warnf("sync bad request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
@@ -76,6 +78,7 @@ func (a *ApiHandler) handleSync(c *gin.Context) {
 	}
 	target, err := mapMetastoreCode(request.Target)
 	if err != nil {
+		logrus.Warnf("sync bad request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
@@ -83,6 +86,7 @@ func (a *ApiHandler) handleSync(c *gin.Context) {
 	}
 	err = a.manager.Sync(source, target, request.DbName, request.Tables, request.Delete)
 	if err != nil {
+		logrus.Errorf("sync error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -95,6 +99,7 @@ func (a *ApiHandler) handleDrop(c *gin.Context) {
 	var request model.DropApiRequest
 	err := c.BindJSON(&request)
 	if err != nil {
+		logrus.Warnf("drop bad request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
@@ -102,6 +107,7 @@ func (a *ApiHandler) handleDrop(c *gin.Context) {
 	}
 	code, err := mapMetastoreCode(request.Metastore)
 	if err != nil {
+		logrus.Warnf("drop bad request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
@@ -109,6 +115,7 @@ func (a *ApiHandler) handleDrop(c *gin.Context) {
 	}
 	errs := a.manager.Drop(code, request.Tables)
 	if errs != nil {
+		logrus.Errorf("drop error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"errors": errorsAsStrings(errs),
 		})
@@ -121,6 +128,7 @@ func (a *ApiHandler) handleCreate(c *gin.Context) {
 	var request model.CreateApiRequest
 	err := c.BindJSON(&request)
 	if err != nil {
+		logrus.Warnf("create bad request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
@@ -128,6 +136,7 @@ func (a *ApiHandler) handleCreate(c *gin.Context) {
 	}
 	codes, err := mapMetastoreCodes(request.Metastores)
 	if err != nil {
+		logrus.Warnf("create bad request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err,
 		})
@@ -135,6 +144,7 @@ func (a *ApiHandler) handleCreate(c *gin.Context) {
 	}
 	err = a.manager.Create(codes, request.Tables)
 	if err != nil {
+		logrus.Errorf("create error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})

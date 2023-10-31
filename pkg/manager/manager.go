@@ -3,6 +3,7 @@ package manager
 import (
 	"fmt"
 	"github.com/hashicorp/go-multierror"
+	"github.com/sirupsen/logrus"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/metastore"
 	"github.com/the-Data-Appeal-Company/metaman/pkg/model"
 )
@@ -29,6 +30,7 @@ func (h *HiveGlueManager) Drop(metastore metastore.MetastoreCode, tables []model
 	var errors []error
 	for _, dbTab := range tables {
 		for _, tab := range dbTab.Tables {
+			logrus.Info("drop table: %s", tab.Table)
 			err = meta.DropTable(dbTab.Db, tab.Table, tab.DeleteData)
 			if err != nil {
 				errors = append(errors, fmt.Errorf("db: %s, table: %s, error: %s", dbTab.Db, tab.Table, err.Error()))
@@ -49,6 +51,7 @@ func (h *HiveGlueManager) Create(metastores []metastore.MetastoreCode, tables []
 		for _, dbTab := range tables {
 			db := dbTab.Db
 			for _, tab := range dbTab.Tables {
+				logrus.Info("create table: %s", tab)
 				err := meta.CreateTable(db, tab)
 				if err != nil {
 					result = multierror.Append(result, err)
@@ -68,6 +71,7 @@ func (h *HiveGlueManager) Sync(sourceMetastore metastore.MetastoreCode, targetMe
 	if err != nil {
 		return err
 	}
+	logrus.Info("syncing tables from: %s to: %s, db: %s", sourceMetastore, targetMetastore, dbName)
 	sourceTables := tables
 	if len(tables) == 0 {
 		sourceTables, err = source.GetTables(dbName)
@@ -85,6 +89,7 @@ func (h *HiveGlueManager) Sync(sourceMetastore metastore.MetastoreCode, targetMe
 	if delete {
 		for _, targetTable := range targetTables {
 			if !tableExists(targetTable, sourceTables) {
+				logrus.Info("drop table: %s", targetTable)
 				err := target.DropTable(dbName, targetTable, delete)
 				if err != nil {
 					result = multierror.Append(result, err)
@@ -99,6 +104,7 @@ func syncTables(source metastore.Metastore, target metastore.Metastore, dbName s
 	var result error
 	for _, sourceTable := range sourceTables {
 		if !tableExists(sourceTable, targetTables) {
+			logrus.Info("create table: %s", sourceTable)
 			err := createTable(source, target, dbName, sourceTable)
 			if err != nil {
 				result = multierror.Append(result, err)
