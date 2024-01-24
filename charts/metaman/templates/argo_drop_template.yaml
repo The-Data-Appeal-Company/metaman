@@ -32,4 +32,4 @@ spec:
           - >-
             drop -c /config/config.yml -d {{printf "{{inputs.parameters.db}} -m {{inputs.parameters.metastore}} -t {{inputs.parameters.tables}}"}}
         resources:
-          {{.Values.resources}}
+          {{ toYaml .Values.resources | nindent 10 }}
