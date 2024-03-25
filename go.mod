@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/akolb1/gometastore v0.0.0-20221218020403-aaa7217ecd00
-	github.com/aws/aws-sdk-go v1.49.13
+	github.com/aws/aws-sdk-go v1.51.6
 	github.com/aws/aws-sdk-go-v2/config v1.19.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.40.2
 	github.com/banzaicloud/go-gin-prometheus v0.1.0
